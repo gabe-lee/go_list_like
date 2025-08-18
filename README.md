@@ -1,8 +1,8 @@
-# go_slice_like
+# go_list_like
 Interface for structs that can operate lise a slice or list
 
 ## Why?
-This package provides a simple interface for things that can behave like a standard Golang slice, but may be user-defined data structures with complex memory layouts. It provides a simple wrapper around Golang slices themselves to adapt them automatically.
+This package provides a simple interface for things that can behave like a 'List' or 'Vector', but may be user-defined data structures with complex memory layouts. It provides a simple wrapper type for Golang slices themselves to adapt them automatically.
 
 Implement:
 ```golang
@@ -50,22 +50,22 @@ func GrowCapIfNeeded[T any](listLike ListLike[T], nMoreItems int)
 ## Installation
 Run this command from your project directory
 ```
-go get github.com/gabe-lee/go_slice_like@latest
+go get github.com/gabe-lee/go_list_like@latest
 ```
 
 ## Example
 ```golang
 import (
     "fmt"
-    sl "github.com/gabe-lee/go_slice_like"
+    ll "github.com/gabe-lee/go_list_like"
 )
 
 func main() {
     mySlice := []byte("Hello World")
-	mySliceLike := sl.New(&mySlice)
+	mySliceLike := ll.New(&mySlice)
 	fmt.Printf("%s\n", mySlice)
-	sl.Append(&mySliceLike, '!')
-	sl.Delete(&mySliceLike, 5, 1)
+	ll.Append(&mySliceLike, '!')
+	ll.Delete(&mySliceLike, 5, 1)
 	fmt.Printf("%s\n", mySlice)
 }
 ```

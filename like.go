@@ -1,4 +1,4 @@
-package go_slice_like
+package go_list_like
 
 type SliceLike[T any] interface {
 	GetPtr(idx int) *T

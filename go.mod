@@ -1,3 +1,3 @@
-module github.com/gabe-lee/go_slice_like
+module github.com/gabe-lee/go_list_like
 
 go 1.21
