@@ -13,22 +13,32 @@ type SliceLike[T any] interface {
 ```
 To get:
 ```golang
+func Len[T any](sliceLike SliceLike[T]) int
 func Get[T any](sliceLike SliceLike[T], idx int) T
 func GetPtr[T any](sliceLike SliceLike[T], idx int) *T
+func GetLast[T any](sliceLike SliceLike[T]) T 
+func GetLastPtr[T any](sliceLike SliceLike[T]) *T
 func Set[T any](sliceLike SliceLike[T], idx int, val T)
-func Len[T any](sliceLike SliceLike[T]) int
+func SetLast[T any](sliceLike SliceLike[T], val T)
+func Swap[T any](sliceLike SliceLike[T], idxA int, idxB int)
+func Move[T any](sliceLike SliceLike[T], oldIdx int, newIdx int)
+func Copy[T any](dest SliceLike[T], destStart, destLen int, source SliceLike[T], srcStart, srcLen int) (n int)
 ```
 And implement:
 ```golang
 type ListLike[T any] interface {
 	SliceLike[T]
-	AddLen(delta int)
+	OffsetLen(delta int)
 }
 ```
 To get:
 ```golang
+// SliceLike[T] funcs...
+func Append[T any](listLike ListLike[T], vals ...T)
 func Insert[T any](listLike ListLike[T], idx int, vals ...T)
 func Delete[T any](listLike ListLike[T], idx int, count int)
+func Remove[T any](listLike ListLike[T], idx int, count int) []T
+func Pop[T any](listLike ListLike[T]) T
 ```
 
 ## Installation
