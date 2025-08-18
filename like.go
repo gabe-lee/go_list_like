@@ -49,31 +49,36 @@ func Insert[T any](listLike ListLike[T], idx int, vals ...T) {
 }
 func Delete[T any](listLike ListLike[T], idx int, count int) {
 	listLen := listLike.Len()
-	for idx < listLen {
-		oldptr := listLike.GetPtr(idx + count)
-		newptr := listLike.GetPtr(idx)
+	moveIdx := idx + count
+	for moveIdx < listLen {
+		oldptr := listLike.GetPtr(moveIdx)
+		newptr := listLike.GetPtr(moveIdx - count)
 		*newptr = *oldptr
-		idx += 1
+		moveIdx += 1
 	}
 	listLike.AddLen(-count)
 }
 
 type SliceAdapter[T any] struct {
-	Slice []T
+	SlicePtr *[]T
 }
 
-func New[T any](slice []T) SliceAdapter[T] {
+func New[T any](slicePtr *[]T) SliceAdapter[T] {
 	return SliceAdapter[T]{
-		Slice: slice,
+		SlicePtr: slicePtr,
 	}
 }
 
 func (sa *SliceAdapter[T]) Len() int {
-	return len(sa.Slice)
+	return len(*sa.SlicePtr)
 }
 func (sa *SliceAdapter[T]) GetPtr(idx int) *T {
-	return &sa.Slice[idx]
+	return &(*sa.SlicePtr)[idx]
 }
 func (sa *SliceAdapter[T]) AddLen(delta int) {
-	sa.Slice = append(sa.Slice, make([]T, delta)...)
+	if delta < 0 {
+		*sa.SlicePtr = (*sa.SlicePtr)[:sa.Len()+delta]
+	} else if delta > 0 {
+		*sa.SlicePtr = append(*sa.SlicePtr, make([]T, delta)...)
+	}
 }
