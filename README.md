@@ -2,7 +2,7 @@
 Interface for structs that can operate lise a slice or list
 
 ## Why?
-This package provides a simple interface for things that can behave like a standard Golang slice, but may be user-defined data structures. It provides a simple wrapper around Golang slices themselves to adapt them automatically.
+This package provides a simple interface for things that can behave like a standard Golang slice, but may be user-defined data structures with complex memory layouts. It provides a simple wrapper around Golang slices themselves to adapt them automatically.
 
 Implement:
 ```golang
@@ -20,6 +20,7 @@ func GetLast[T any](sliceLike SliceLike[T]) T
 func GetLastPtr[T any](sliceLike SliceLike[T]) *T
 func Set[T any](sliceLike SliceLike[T], idx int, val T)
 func SetLast[T any](sliceLike SliceLike[T], val T)
+func SetFrom[T any](dest SliceLike[T], destIdx int, source SliceLike[T], srcIdx int)
 func Swap[T any](sliceLike SliceLike[T], idxA int, idxB int)
 func Move[T any](sliceLike SliceLike[T], oldIdx int, newIdx int)
 func Copy[T any](dest SliceLike[T], destStart, destLen int, source SliceLike[T], srcStart, srcLen int) (n int)
@@ -40,8 +41,11 @@ func Append[T any](listLike ListLike[T], vals ...T)
 func Insert[T any](listLike ListLike[T], idx int, vals ...T)
 func Delete[T any](listLike ListLike[T], idx int, count int)
 func Remove[T any](listLike ListLike[T], idx int, count int) []T
+func Replace[T any](dest ListLike[T], destStart, destLen int, source SliceLike[T], srcStart, srcLen int) (delta int)
 func Pop[T any](listLike ListLike[T]) T
-func GrowIfNeeded[T any](listLike ListLike[T], nMoreItems int)
+func GrowLen[T any](listLike ListLike[T], grow int)
+func ShrinkLen[T any](listLike ListLike[T], shrink int)
+func GrowCapIfNeeded[T any](listLike ListLike[T], nMoreItems int)
 ```
 ## Installation
 Run this command from your project directory

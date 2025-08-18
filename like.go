@@ -32,6 +32,9 @@ func Set[T any](sliceLike SliceLike[T], idx int, val T) {
 func SetLast[T any](sliceLike SliceLike[T], val T) {
 	*sliceLike.GetPtr(sliceLike.Len() - 1) = val
 }
+func SetFrom[T any](dest SliceLike[T], destIdx int, source SliceLike[T], srcIdx int) {
+	*dest.GetPtr(destIdx) = *source.GetPtr(srcIdx)
+}
 func Swap[T any](sliceLike SliceLike[T], idxA int, idxB int) {
 	tmp := Get(sliceLike, idxA)
 	*GetPtr(sliceLike, idxA) = Get(sliceLike, idxB)
@@ -57,6 +60,12 @@ func Copy[T any](dest SliceLike[T], destStart, destLen int, source SliceLike[T],
 
 func Cap[T any](listLike ListLike[T]) int {
 	return listLike.Cap()
+}
+func GrowLen[T any](listLike ListLike[T], grow int) {
+	listLike.OffsetLen(grow)
+}
+func ShrinkLen[T any](listLike ListLike[T], shrink int) {
+	listLike.OffsetLen(-shrink)
 }
 func Append[T any](listLike ListLike[T], vals ...T) {
 	end := listLike.Len()
@@ -109,6 +118,33 @@ func Remove[T any](listLike ListLike[T], idx int, count int) []T {
 	listLike.OffsetLen(-count)
 	return ret
 }
+func Replace[T any](dest ListLike[T], destStart, destLen int, source SliceLike[T], srcStart, srcLen int) (delta int) {
+	if destLen == srcLen {
+		Copy(dest, destStart, destLen, source, srcStart, srcLen)
+		return 0
+	}
+	if destLen > srcLen {
+		delta = destLen - srcLen
+		moveDownIdx := destStart + destLen
+		for moveDownIdx < dest.Len() {
+			Move(dest, moveDownIdx, moveDownIdx-delta)
+			moveDownIdx += 1
+		}
+		dest.OffsetLen(-delta)
+		Copy(dest, destStart, destLen-delta, source, srcStart, srcLen)
+	} else {
+		delta = srcLen - destLen
+		moveUpIdx := dest.Len() - 1
+		moveUpEnd := destStart + destLen - 1
+		dest.OffsetLen(delta)
+		for moveUpIdx > moveUpEnd {
+			Move(dest, moveUpIdx, moveUpIdx+delta)
+			moveUpIdx -= 1
+		}
+		Copy(dest, destStart, destLen+delta, source, srcStart, srcLen)
+	}
+	return delta
+}
 
 func Pop[T any](listLike ListLike[T]) T {
 	ret := *listLike.GetPtr(listLike.Len() - 1)
@@ -116,7 +152,7 @@ func Pop[T any](listLike ListLike[T]) T {
 	return ret
 }
 
-func GrowIfNeeded[T any](listLike ListLike[T], nMoreItems int) {
+func GrowCapIfNeeded[T any](listLike ListLike[T], nMoreItems int) {
 	space := listLike.Cap() - listLike.Len()
 	if space >= nMoreItems {
 		return
