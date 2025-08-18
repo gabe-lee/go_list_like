@@ -8,6 +8,7 @@ type SliceLike[T any] interface {
 type ListLike[T any] interface {
 	SliceLike[T]
 	OffsetLen(delta int)
+	Cap() int
 }
 
 func Len[T any](sliceLike SliceLike[T]) int {
@@ -54,6 +55,9 @@ func Copy[T any](dest SliceLike[T], destStart, destLen int, source SliceLike[T],
 	return
 }
 
+func Cap[T any](listLike ListLike[T]) int {
+	return listLike.Cap()
+}
 func Append[T any](listLike ListLike[T], vals ...T) {
 	end := listLike.Len()
 	listLike.OffsetLen(len(vals))
@@ -112,6 +116,15 @@ func Pop[T any](listLike ListLike[T]) T {
 	return ret
 }
 
+func GrowIfNeeded[T any](listLike ListLike[T], nMoreItems int) {
+	space := listLike.Cap() - listLike.Len()
+	if space >= nMoreItems {
+		return
+	}
+	listLike.OffsetLen(nMoreItems)
+	listLike.OffsetLen(-nMoreItems)
+}
+
 type SliceAdapter[T any] struct {
 	SlicePtr *[]T
 }
@@ -125,13 +138,18 @@ func New[T any](slicePtr *[]T) SliceAdapter[T] {
 func (sa *SliceAdapter[T]) Len() int {
 	return len(*sa.SlicePtr)
 }
+func (sa *SliceAdapter[T]) Cap() int {
+	return cap(*sa.SlicePtr)
+}
 func (sa *SliceAdapter[T]) GetPtr(idx int) *T {
 	return &(*sa.SlicePtr)[idx]
 }
-func (sa *SliceAdapter[T]) AddLen(delta int) {
+func (sa *SliceAdapter[T]) OffsetLen(delta int) {
 	if delta < 0 {
 		*sa.SlicePtr = (*sa.SlicePtr)[:sa.Len()+delta]
 	} else if delta > 0 {
 		*sa.SlicePtr = append(*sa.SlicePtr, make([]T, delta)...)
 	}
 }
+
+var _ ListLike[byte] = (*SliceAdapter[byte])(nil)

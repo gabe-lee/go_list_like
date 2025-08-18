@@ -29,18 +29,20 @@ And implement:
 type ListLike[T any] interface {
 	SliceLike[T]
 	OffsetLen(delta int)
+    Cap() int
 }
 ```
 To get:
 ```golang
 // SliceLike[T] funcs...
+func Cap[T any](listLike ListLike[T]) int
 func Append[T any](listLike ListLike[T], vals ...T)
 func Insert[T any](listLike ListLike[T], idx int, vals ...T)
 func Delete[T any](listLike ListLike[T], idx int, count int)
 func Remove[T any](listLike ListLike[T], idx int, count int) []T
 func Pop[T any](listLike ListLike[T]) T
+func GrowIfNeeded[T any](listLike ListLike[T], nMoreItems int)
 ```
-
 ## Installation
 Run this command from your project directory
 ```
