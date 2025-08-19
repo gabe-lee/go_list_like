@@ -171,16 +171,16 @@ func New[T any](slicePtr *[]T) SliceAdapter[T] {
 	}
 }
 
-func (sa *SliceAdapter[T]) Len() int {
+func (sa SliceAdapter[T]) Len() int {
 	return len(*sa.SlicePtr)
 }
-func (sa *SliceAdapter[T]) Cap() int {
+func (sa SliceAdapter[T]) Cap() int {
 	return cap(*sa.SlicePtr)
 }
-func (sa *SliceAdapter[T]) GetPtr(idx int) *T {
+func (sa SliceAdapter[T]) GetPtr(idx int) *T {
 	return &(*sa.SlicePtr)[idx]
 }
-func (sa *SliceAdapter[T]) OffsetLen(delta int) {
+func (sa SliceAdapter[T]) OffsetLen(delta int) {
 	if delta < 0 {
 		*sa.SlicePtr = (*sa.SlicePtr)[:sa.Len()+delta]
 	} else if delta > 0 {
@@ -188,4 +188,4 @@ func (sa *SliceAdapter[T]) OffsetLen(delta int) {
 	}
 }
 
-var _ ListLike[byte] = (*SliceAdapter[byte])(nil)
+var _ ListLike[byte] = SliceAdapter[byte]{}
