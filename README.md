@@ -5,13 +5,14 @@ Interface for user-defined types or wrappers around 3rd-party types that can beh
   - [Interfaces](#interfaces)
     - [SliceLike[T]](#sliceliket)
     - [ListLike[T]](#listliket)
+    - [QueueLike[T]](#queueliket)
     - [FwdTraversable[T]](#fwdtraversablet)
 	- [FwdLinkedListLike[T]](#fwdlinkedlistliket) (not yet used)
 	- [RevTraversable[T]](#revtraversablet) (not yet used)
 	- [RevLinkedListLike[T]](#revlinkedlistliket) (not yet used)
   - [Example](#example)
 ## Why?
-This package provides a simple interface for things that can behave like a 'List' or 'Vector', but may be user-defined data structures with complex memory layouts and/or traversal methods. By implementing these interfaces, one can avoid an intermediate temporary slice to use as an interface between two differen incompatible data structures.
+This package provides a simple interface for things that can behave like a 'List' or 'Vector', but may be user-defined data structures with complex memory layouts and/or traversal methods. By implementing these interfaces, one can avoid an intermediate temporary slice to use as an interface between two different incompatible data structures.
 
 It provides a simple wrapper type for Golang slices themselves to adapt them automatically.
 
@@ -26,6 +27,7 @@ Then implement one or more of the defined interfaces for your data structure in 
 As a special case, the provided wrapper type `SliceAdapter[T]` can be used with a standard golang slice `[]T`, which implements:
   - SliceLike[T]
   - ListLike[T]
+  - QueueLike[T]
   - FwdTraversable[T]
   - RevTraversable[T]
 
@@ -47,11 +49,17 @@ To get:
 ```golang
 func Len[T any](sliceLike SliceLike[T]) int
 func Get[T any](sliceLike SliceLike[T], idx int) T
+func TryGet[T any](sliceLike SliceLike[T], idx int) (val T, ok bool)
 func GetPtr[T any](sliceLike SliceLike[T], idx int) *T
+func TryGetPtr[T any](sliceLike SliceLike[T], idx int) (val *T, ok bool)
 func GetLast[T any](sliceLike SliceLike[T]) T 
+func TryGetLast[T any](sliceLike SliceLike[T]) (val T, ok bool)
 func GetLastPtr[T any](sliceLike SliceLike[T]) *T
+func TryGetLastPtr[T any](sliceLike SliceLike[T]) (val *T, ok bool)
 func Set[T any](sliceLike SliceLike[T], idx int, val T)
+func TrySet[T any](sliceLike SliceLike[T], idx int, val T) (ok bool)
 func SetLast[T any](sliceLike SliceLike[T], val T)
+func TrySetLast[T any](sliceLike SliceLike[T], val T) (ok bool) 
 func SetFrom[T any](dest SliceLike[T], destIdx int, source SliceLike[T], srcIdx int)
 func Swap[T any](sliceLike SliceLike[T], idxA int, idxB int)
 func Move[T any](sliceLike SliceLike[T], oldIdx int, newIdx int)
@@ -78,18 +86,38 @@ type ListLike[T any] interface {
 To get:
 ```golang
 // SliceLike[T] funcs...
+func OffsetLen[T any](listLike ListLike[T], delta int)
+func GrowLen[T any](listLike ListLike[T], grow int)
+func ShrinkLen[T any](listLike ListLike[T], shrink int)
 func Cap[T any](listLike ListLike[T]) int
+func GrowCapIfNeeded[T any](listLike ListLike[T], nMoreItems int)
 func Append[T any](listLike ListLike[T], vals ...T)
 func Clear[T any](listLike ListLike[T]) 
 func Insert[T any](listLike ListLike[T], idx int, vals ...T)
 func Delete[T any](listLike ListLike[T], idx int, count int)
 func DeleteSparse[T any, I Index](listLike ListLike[T], deleteIndexSlice SliceLike[I], sortDeleteIndexes bool)
-func Remove[T any](listLike ListLike[T], idx int, count int) []T
+func Remove[T any](listLike ListLike[T], idx int, count int, outputList ListLike[T])
+func RemoveSparse[T any, I Index](listLike ListLike[T], removeIndexSlice SliceLike[I], sortRemoveIndexes bool, outputList ListLike[T])
 func Replace[T any](dest ListLike[T], destStart, destLen int, source SliceLike[T], srcStart, srcLen int) (delta int)
 func Pop[T any](listLike ListLike[T]) T
-func GrowLen[T any](listLike ListLike[T], grow int)
-func ShrinkLen[T any](listLike ListLike[T], shrink int)
-func GrowCapIfNeeded[T any](listLike ListLike[T], nMoreItems int)
+```
+
+[Back to Top](#go_list_like)
+### QueueLike[T]
+Implement:
+```golang
+type QueueLike[T any] interface {
+	ListLike[T]
+	// Offset the start location (index/pointer/etc.) of this queue by
+	// the given delta. The new 'first' item in the queue should be the item
+	// previously located at `queue.GetPtr(0+delta)`.
+	OffsetStart(delta int)
+}
+```
+To get:
+```golang
+// ListLike[T] funcs...
+func Dequeue[T any](queueLike QueueLike[T], count int, outputList ListLike[T])
 ```
 
 [Back to Top](#go_list_like)

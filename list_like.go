@@ -28,20 +28,58 @@ func Len[T any](sliceLike SliceLike[T]) int {
 func Get[T any](sliceLike SliceLike[T], idx int) T {
 	return *sliceLike.GetPtr(idx)
 }
+func TryGet[T any](sliceLike SliceLike[T], idx int) (val T, ok bool) {
+	if idx >= sliceLike.Len() {
+		return val, false
+	}
+	return *sliceLike.GetPtr(idx), true
+}
 func GetPtr[T any](sliceLike SliceLike[T], idx int) *T {
 	return sliceLike.GetPtr(idx)
+}
+func TryGetPtr[T any](sliceLike SliceLike[T], idx int) (val *T, ok bool) {
+	if idx >= sliceLike.Len() {
+		return val, false
+	}
+	return sliceLike.GetPtr(idx), true
 }
 func GetLast[T any](sliceLike SliceLike[T]) T {
 	return *sliceLike.GetPtr(sliceLike.Len() - 1)
 }
+func TryGetLast[T any](sliceLike SliceLike[T]) (val T, ok bool) {
+	if sliceLike.Len() == 0 {
+		return val, false
+	}
+	return *sliceLike.GetPtr(sliceLike.Len() - 1), true
+}
 func GetLastPtr[T any](sliceLike SliceLike[T]) *T {
 	return sliceLike.GetPtr(sliceLike.Len() - 1)
+}
+func TryGetLastPtr[T any](sliceLike SliceLike[T]) (val *T, ok bool) {
+	if sliceLike.Len() == 0 {
+		return val, false
+	}
+	return sliceLike.GetPtr(sliceLike.Len() - 1), true
 }
 func Set[T any](sliceLike SliceLike[T], idx int, val T) {
 	*sliceLike.GetPtr(idx) = val
 }
+func TrySet[T any](sliceLike SliceLike[T], idx int, val T) (ok bool) {
+	if idx >= sliceLike.Len() {
+		return false
+	}
+	*sliceLike.GetPtr(idx) = val
+	return true
+}
 func SetLast[T any](sliceLike SliceLike[T], val T) {
 	*sliceLike.GetPtr(sliceLike.Len() - 1) = val
+}
+func TrySetLast[T any](sliceLike SliceLike[T], val T) (ok bool) {
+	if sliceLike.Len() == 0 {
+		return false
+	}
+	*sliceLike.GetPtr(sliceLike.Len() - 1) = val
+	return true
 }
 func SetFrom[T any](dest SliceLike[T], destIdx int, source SliceLike[T], srcIdx int) {
 	*dest.GetPtr(destIdx) = *source.GetPtr(srcIdx)
@@ -144,55 +182,58 @@ type ListLike[T any] interface {
 	Cap() int
 }
 
-func Cap[T any](listLike ListLike[T]) int {
-	return listLike.Cap()
+func OffsetLen[T any](list ListLike[T], delta int) {
+	list.OffsetLen(delta)
 }
-func GrowLen[T any](listLike ListLike[T], grow int) {
-	listLike.OffsetLen(grow)
+func Cap[T any](list ListLike[T]) int {
+	return list.Cap()
 }
-func ShrinkLen[T any](listLike ListLike[T], shrink int) {
-	listLike.OffsetLen(-shrink)
+func GrowLen[T any](list ListLike[T], grow int) {
+	list.OffsetLen(grow)
 }
-func Clear[T any](listLike ListLike[T]) {
-	length := listLike.Len()
-	listLike.OffsetLen(-length)
+func ShrinkLen[T any](list ListLike[T], shrink int) {
+	list.OffsetLen(-shrink)
 }
-func Append[T any](listLike ListLike[T], vals ...T) {
-	end := listLike.Len()
-	listLike.OffsetLen(len(vals))
+func Clear[T any](list ListLike[T]) {
+	length := list.Len()
+	list.OffsetLen(-length)
+}
+func Append[T any](list ListLike[T], vals ...T) {
+	end := list.Len()
+	list.OffsetLen(len(vals))
 	for i, v := range vals {
-		ptr := listLike.GetPtr(end + i)
+		ptr := list.GetPtr(end + i)
 		*ptr = v
 	}
 }
-func Insert[T any](listLike ListLike[T], idx int, vals ...T) {
-	moveIdx := listLike.Len() - 1
+func Insert[T any](list ListLike[T], idx int, vals ...T) {
+	moveIdx := list.Len() - 1
 	moveLen := len(vals)
-	listLike.OffsetLen(moveLen)
+	list.OffsetLen(moveLen)
 	for moveIdx >= idx {
-		oldptr := listLike.GetPtr(moveIdx)
-		newptr := listLike.GetPtr(moveIdx + moveLen)
+		oldptr := list.GetPtr(moveIdx)
+		newptr := list.GetPtr(moveIdx + moveLen)
 		*newptr = *oldptr
 		moveIdx -= 1
 	}
 	moveIdx += 1
 	for i, v := range vals {
-		ptr := listLike.GetPtr(idx + i)
+		ptr := list.GetPtr(idx + i)
 		*ptr = v
 	}
 }
-func Delete[T any](listLike ListLike[T], idx int, count int) {
-	listLen := listLike.Len()
+func Delete[T any](list ListLike[T], idx int, count int) {
+	listLen := list.Len()
 	moveIdx := idx + count
 	for moveIdx < listLen {
-		oldptr := listLike.GetPtr(moveIdx)
-		newptr := listLike.GetPtr(moveIdx - count)
+		oldptr := list.GetPtr(moveIdx)
+		newptr := list.GetPtr(moveIdx - count)
 		*newptr = *oldptr
 		moveIdx += 1
 	}
-	listLike.OffsetLen(-count)
+	list.OffsetLen(-count)
 }
-func DeleteSparse[T any, I Index](listLike ListLike[T], deleteIndexSlice SliceLike[I], sortDeleteIndexes bool) {
+func DeleteSparse[T any, I Index](list ListLike[T], deleteIndexSlice SliceLike[I], sortDeleteIndexes bool) {
 	if sortDeleteIndexes {
 		SortImplicit(deleteIndexSlice)
 	}
@@ -208,33 +249,62 @@ func DeleteSparse[T any, I Index](listLike ListLike[T], deleteIndexSlice SliceLi
 				deleteIdx = Get(deleteIndexSlice, deleteIdxIdx)
 			}
 		} else {
-			Move(listLike, int(removeIdx), int(insertIdx))
+			Move(list, int(removeIdx), int(insertIdx))
 			insertIdx += 1
 			removeIdx += 1
 		}
 	}
-	for removeIdx < I(listLike.Len()) {
-		Move(listLike, int(removeIdx), int(insertIdx))
+	for removeIdx < I(list.Len()) {
+		Move(list, int(removeIdx), int(insertIdx))
 		insertIdx += 1
 		removeIdx += 1
 	}
-	listLike.OffsetLen(-deleteIndexSlice.Len())
+	list.OffsetLen(-deleteIndexSlice.Len())
 }
-func Remove[T any](listLike ListLike[T], idx int, count int) []T {
-	ret := make([]T, count)
-	for i := range ret {
-		ret[i] = Get(SliceLike[T](listLike), i+idx)
+func Remove[T any](list ListLike[T], idx int, count int, outputList ListLike[T]) {
+	Clear(outputList)
+	for i := range count {
+		Append(outputList, Get(SliceLike[T](list), i+idx))
 	}
-	listLen := listLike.Len()
+	listLen := list.Len()
 	moveIdx := idx + count
 	for moveIdx < listLen {
-		oldptr := listLike.GetPtr(moveIdx)
-		newptr := listLike.GetPtr(moveIdx - count)
+		oldptr := list.GetPtr(moveIdx)
+		newptr := list.GetPtr(moveIdx - count)
 		*newptr = *oldptr
 		moveIdx += 1
 	}
-	listLike.OffsetLen(-count)
-	return ret
+	list.OffsetLen(-count)
+}
+func RemoveSparse[T any, I Index](list ListLike[T], removeIndexSlice SliceLike[I], sortRemoveIndexes bool, outputList ListLike[T]) {
+	Clear(outputList)
+	if sortRemoveIndexes {
+		SortImplicit(removeIndexSlice)
+	}
+	insertIdx := Get(removeIndexSlice, 0)
+	removeIdx := insertIdx
+	deleteIdxIdx := 0
+	deleteIdx := insertIdx
+	for deleteIdxIdx < removeIndexSlice.Len() {
+		if removeIdx == deleteIdx {
+			Append(outputList, Get(list, int(removeIdx)))
+			removeIdx += 1
+			deleteIdxIdx += 1
+			if deleteIdxIdx < removeIndexSlice.Len() {
+				deleteIdx = Get(removeIndexSlice, deleteIdxIdx)
+			}
+		} else {
+			Move(list, int(removeIdx), int(insertIdx))
+			insertIdx += 1
+			removeIdx += 1
+		}
+	}
+	for removeIdx < I(list.Len()) {
+		Move(list, int(removeIdx), int(insertIdx))
+		insertIdx += 1
+		removeIdx += 1
+	}
+	list.OffsetLen(-removeIndexSlice.Len())
 }
 func Replace[T any](dest ListLike[T], destStart, destLen int, source SliceLike[T], srcStart, srcLen int) (delta int) {
 	if destLen == srcLen {
@@ -264,19 +334,38 @@ func Replace[T any](dest ListLike[T], destStart, destLen int, source SliceLike[T
 	return delta
 }
 
-func Pop[T any](listLike ListLike[T]) T {
-	ret := *listLike.GetPtr(listLike.Len() - 1)
-	listLike.OffsetLen(-1)
+func Pop[T any](list ListLike[T]) T {
+	ret := *list.GetPtr(list.Len() - 1)
+	list.OffsetLen(-1)
 	return ret
 }
 
-func GrowCapIfNeeded[T any](listLike ListLike[T], nMoreItems int) {
-	space := listLike.Cap() - listLike.Len()
+func GrowCapIfNeeded[T any](list ListLike[T], nMoreItems int) {
+	space := list.Cap() - list.Len()
 	if space >= nMoreItems {
 		return
 	}
-	listLike.OffsetLen(nMoreItems)
-	listLike.OffsetLen(-nMoreItems)
+	list.OffsetLen(nMoreItems)
+	list.OffsetLen(-nMoreItems)
+}
+
+// **************
+// QueueLike[T] *
+// **************
+
+type QueueLike[T any] interface {
+	ListLike[T]
+	// Offset the start location (index/pointer/etc.) of this queue by
+	// the given delta. The new 'first' item in the queue should be the item
+	// previously located at `queue.GetPtr(0+delta)`.
+	OffsetStart(delta int)
+}
+
+func Dequeue[T any](queueLike QueueLike[T], count int, outputList ListLike[T]) {
+	Clear(outputList)
+	GrowLen(outputList, count)
+	Copy(outputList, 0, count, queueLike, 0, count)
+	queueLike.OffsetStart(count)
 }
 
 // *******************
@@ -394,6 +483,8 @@ func AccumulateWithUserdata[T any, TT any, U any](slice FwdTraversable[T], initi
 	}
 	return initialAccumulation
 }
+
+//
 
 type FwdLinkedListLike[T any] interface {
 	FwdTraversable[T]

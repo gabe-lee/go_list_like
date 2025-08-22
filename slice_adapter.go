@@ -42,7 +42,10 @@ func (sa SliceAdapter[T]) PrevIdx(thisIdx int) (prevIdx int, hasPrev bool) {
 	hasPrev = prevIdx >= 0
 	return
 }
+func (sa SliceAdapter[T]) OffsetStart(delta int) {
+	*sa.SlicePtr = (*sa.SlicePtr)[delta:]
+}
 
-var _ ListLike[byte] = SliceAdapter[byte]{}
+var _ QueueLike[byte] = SliceAdapter[byte]{}
 var _ FwdTraversable[byte] = SliceAdapter[byte]{}
 var _ RevTraversable[byte] = SliceAdapter[byte]{}
