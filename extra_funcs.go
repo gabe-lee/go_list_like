@@ -1,7 +1,9 @@
 package go_list_like
 
 import (
+	"cmp"
 	"math"
+	"unsafe"
 )
 
 type integer interface {
@@ -151,4 +153,76 @@ func SetBitRsh[T integer](slice SliceLike[T], idx int, val T) {
 // return slice[idx] >> val
 func GetBitRsh[T integer](slice SliceLike[T], idx int, val T) (result T) {
 	return slice.Get(idx) >> val
+}
+
+// return slice[idx] < val
+func GetLessThan[T cmp.Ordered](slice SliceLike[T], idx int, val T) bool {
+	return slice.Get(idx) < val
+}
+
+// return slice[idx1] < slice[idx2]
+func GetLessThan2[T cmp.Ordered](slice SliceLike[T], idx1 int, idx2 int) bool {
+	return slice.Get(idx1) < slice.Get(idx2)
+}
+
+// return slice[idx] <= val
+func GetLessThanEqual[T cmp.Ordered](slice SliceLike[T], idx int, val T) bool {
+	return slice.Get(idx) <= val
+}
+
+// return slice[idx1] <= slice[idx2]
+func GetLessThanEqual2[T cmp.Ordered](slice SliceLike[T], idx1 int, idx2 int) bool {
+	return slice.Get(idx1) <= slice.Get(idx2)
+}
+
+// return slice[idx] > val
+func GetGreaterThan[T cmp.Ordered](slice SliceLike[T], idx int, val T) bool {
+	return slice.Get(idx) > val
+}
+
+// return slice[idx1] > slice[idx2]
+func GetGreaterThan2[T cmp.Ordered](slice SliceLike[T], idx1 int, idx2 int) bool {
+	return slice.Get(idx1) > slice.Get(idx2)
+}
+
+// return slice[idx] >= val
+func GetGreaterThanEqual[T cmp.Ordered](slice SliceLike[T], idx int, val T) bool {
+	return slice.Get(idx) >= val
+}
+
+// return slice[idx1] >= slice[idx2]
+func GetGreaterThanEqual2[T cmp.Ordered](slice SliceLike[T], idx1 int, idx2 int) bool {
+	return slice.Get(idx1) >= slice.Get(idx2)
+}
+
+// return slice[idx] == val
+func GetEquals[T cmp.Ordered](slice SliceLike[T], idx int, val T) bool {
+	return slice.Get(idx) == val
+}
+
+// return slice[idx1] == slice[idx2]
+func GetEquals2[T cmp.Ordered](slice SliceLike[T], idx1 int, idx2 int) bool {
+	return slice.Get(idx1) == slice.Get(idx2)
+}
+
+// return slice[idx] != val
+func GetNotEquals[T cmp.Ordered](slice SliceLike[T], idx int, val T) bool {
+	return slice.Get(idx) != val
+}
+
+// return slice[idx1] != slice[idx2]
+func GetNotEquals2[T cmp.Ordered](slice SliceLike[T], idx1 int, idx2 int) bool {
+	return slice.Get(idx1) != slice.Get(idx2)
+}
+
+// return *(*TT)(unsafe.Pointer(&slice[idx]))
+func GetUnsafeCast[T any, TT any](slice SliceLike[T], idx int) (val TT) {
+	v := slice.Get(idx)
+	return *(*TT)(unsafe.Pointer(&v))
+}
+
+// return *(*TT)(unsafe.Pointer(&slice[idx]))
+func GetUnsafePtrCast[T any, TT any](slice MemSliceLike[T], idx int) (val *TT) {
+	v := slice.GetPtr(idx)
+	return (*TT)(unsafe.Pointer(v))
 }
