@@ -13,7 +13,12 @@ func NewSliceAdapter[T any](slicePtr *[]T) SliceAdapter[T] {
 		SlicePtr: slicePtr,
 	}
 }
-
+func EmptySliceAdapter[T any](initCap int) SliceAdapter[T] {
+	slice := make([]T, 0, initCap)
+	return SliceAdapter[T]{
+		SlicePtr: &slice,
+	}
+}
 func (slice SliceAdapter[T]) WriteAt(src []T, off int64) (n int, err error) {
 	if off > int64(slice.Len()) {
 		return 0, io.EOF
