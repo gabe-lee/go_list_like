@@ -20,7 +20,7 @@ type number interface {
 }
 
 // slice[idx] = slice[idx] + val
-func AddSet[T number](slice SliceLike[T], idx int, val T) {
+func SetAdd[T number](slice SliceLike[T], idx int, val T) {
 	slice.Set(idx, slice.Get(idx)+val)
 }
 
@@ -30,42 +30,42 @@ func GetAdd[T number](slice SliceLike[T], idx int, val T) (result T) {
 }
 
 // slice[idx] = slice[idx] - val
-func SubSet[T number](slice SliceLike[T], idx int, val T) {
+func SetSubtract[T number](slice SliceLike[T], idx int, val T) {
 	slice.Set(idx, slice.Get(idx)-val)
 }
 
 // return slice[idx] - val
-func GetSub[T number](slice SliceLike[T], idx int, val T) (result T) {
+func GetSubtract[T number](slice SliceLike[T], idx int, val T) (result T) {
 	return slice.Get(idx) - val
 }
 
 // slice[idx] = slice[idx] * val
-func MultSet[T number](slice SliceLike[T], idx int, val T) {
+func SetMultiply[T number](slice SliceLike[T], idx int, val T) {
 	slice.Set(idx, slice.Get(idx)*val)
 }
 
 // return slice[idx] * val
-func GetMult[T number](slice SliceLike[T], idx int, val T) (result T) {
+func GetMultiply[T number](slice SliceLike[T], idx int, val T) (result T) {
 	return slice.Get(idx) * val
 }
 
 // slice[idx] = slice[idx] / val
-func DivSet[T number](slice SliceLike[T], idx int, val T) {
+func SetDivide[T number](slice SliceLike[T], idx int, val T) {
 	slice.Set(idx, slice.Get(idx)/val)
 }
 
 // return slice[idx] / val
-func GetDiv[T number](slice SliceLike[T], idx int, val T) (result T) {
+func GetDivide[T number](slice SliceLike[T], idx int, val T) (result T) {
 	return slice.Get(idx) / val
 }
 
 // slice[idx] = slice[idx] % val
-func ModSet[T integer](slice SliceLike[T], idx int, val T) {
+func SetModulo[T integer](slice SliceLike[T], idx int, val T) {
 	slice.Set(idx, slice.Get(idx)%val)
 }
 
 // return slice[idx] % val
-func GetMod[T integer](slice SliceLike[T], idx int, val T) (result T) {
+func GetModulo[T integer](slice SliceLike[T], idx int, val T) (result T) {
 	return slice.Get(idx) % val
 }
 
@@ -77,12 +77,12 @@ func GetModRem[T integer](slice SliceLike[T], idx int, val T) (mod T, rem T) {
 }
 
 // slice[idx] = math.Mod(slice[idx], val)
-func FModSet[T float](slice SliceLike[T], idx int, val T) {
+func SetFModulo[T float](slice SliceLike[T], idx int, val T) {
 	slice.Set(idx, T(math.Mod(float64(slice.Get(idx)), float64(val))))
 }
 
 // return math.Mod(slice[idx], val)
-func GetFMod[T float](slice SliceLike[T], idx int, val T) (result T) {
+func GetFModulo[T float](slice SliceLike[T], idx int, val T) (result T) {
 	return T(math.Mod(float64(slice.Get(idx)), float64(val)))
 }
 
@@ -94,7 +94,7 @@ func GetFModRem[T float](slice SliceLike[T], idx int, val T) (mod T, rem T) {
 }
 
 // slice[idx] = slice[idx] & val
-func BitAndSet[T integer](slice SliceLike[T], idx int, val T) {
+func SetBitAnd[T integer](slice SliceLike[T], idx int, val T) {
 	slice.Set(idx, slice.Get(idx)&val)
 }
 
@@ -104,7 +104,7 @@ func GetBitAnd[T integer](slice SliceLike[T], idx int, val T) (result T) {
 }
 
 // slice[idx] = slice[idx] & val
-func BitOrSet[T integer](slice SliceLike[T], idx int, val T) {
+func SetBitOr[T integer](slice SliceLike[T], idx int, val T) {
 	slice.Set(idx, slice.Get(idx)|val)
 }
 
@@ -114,7 +114,7 @@ func GetBitOr[T integer](slice SliceLike[T], idx int, val T) (result T) {
 }
 
 // slice[idx] = slice[idx] ^ val
-func BitXorSet[T integer](slice SliceLike[T], idx int, val T) {
+func SetBitXor[T integer](slice SliceLike[T], idx int, val T) {
 	slice.Set(idx, slice.Get(idx)^val)
 }
 
@@ -124,17 +124,17 @@ func GetBitXor[T integer](slice SliceLike[T], idx int, val T) (result T) {
 }
 
 // slice[idx] = ^slice[idx]
-func BitNotSet[T integer](slice SliceLike[T], idx int) {
+func SetBitInvert[T integer](slice SliceLike[T], idx int) {
 	slice.Set(idx, ^slice.Get(idx))
 }
 
 // return ^slice[idx]
-func GetBitNot[T integer](slice SliceLike[T], idx int) (result T) {
+func GetBitInvert[T integer](slice SliceLike[T], idx int) (result T) {
 	return ^slice.Get(idx)
 }
 
 // slice[idx] = slice[idx] << val
-func BitLshSet[T integer](slice SliceLike[T], idx int, val T) {
+func SetBitLsh[T integer](slice SliceLike[T], idx int, val T) {
 	slice.Set(idx, slice.Get(idx)<<val)
 }
 
@@ -144,7 +144,7 @@ func GetBitLsh[T integer](slice SliceLike[T], idx int, val T) (result T) {
 }
 
 // slice[idx] = slice[idx] >> val
-func BitRshSet[T integer](slice SliceLike[T], idx int, val T) {
+func SetBitRsh[T integer](slice SliceLike[T], idx int, val T) {
 	slice.Set(idx, slice.Get(idx)>>val)
 }
 
