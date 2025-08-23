@@ -90,6 +90,17 @@ func (slice SliceAdapter[T]) OffsetStart(delta int) {
 	*slice.SlicePtr = (*slice.SlicePtr)[delta:]
 }
 
+func (slice SliceAdapter[T]) Slice(start int, end int) SliceLike[T] {
+	newSlice := (*slice.SlicePtr)[start:end]
+	return SliceAdapter[T]{
+		SlicePtr: &newSlice,
+	}
+}
+
+func (slice SliceAdapter[T]) GoSlice() []T {
+	return *slice.SlicePtr
+}
+
 var _ MemQueueLike[byte] = SliceAdapter[byte]{}
 var _ io.Reader = SliceAdapter[byte]{}
 var _ io.Writer = SliceAdapter[byte]{}

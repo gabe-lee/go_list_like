@@ -18,6 +18,10 @@ type SliceLike[T any] interface {
 	Get(idx int) (val T)
 	// Set the value at the provided index to the given value
 	Set(idx int, val T)
+	// Return another SliceLike[T] that holds values in range [start:end)
+	//
+	// Analogous to slice[start:end]
+	Slice(start int, end int) SliceLike[T]
 	// Return the current number of values in the slice/list
 	//
 	// All values less than this length MUST be valid for Get() and Set()

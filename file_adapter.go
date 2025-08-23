@@ -1,6 +1,7 @@
 package go_list_like
 
 import (
+	"fmt"
 	"io"
 	"os"
 	"syscall"
@@ -42,6 +43,15 @@ func (f FileAdapter) Len() int {
 func (f FileAdapter) Set(idx int, val byte) {
 	var b = [1]byte{val}
 	f.File.WriteAt(b[:], int64(idx))
+}
+func (f FileAdapter) Slice(start int, end int) SliceLike[byte] {
+	assertIdxInRange(0, start, f.Len())
+	assertIdxInRange(0, end, f.Len())
+	return FileSliceAdapter{
+		FAdapter: f,
+		start:    start,
+		end:      end,
+	}
 }
 
 func (f FileAdapter) Chdir() error {
@@ -122,3 +132,43 @@ var _ io.Reader = FileAdapter{}
 var _ io.Writer = FileAdapter{}
 var _ io.ReaderAt = FileAdapter{}
 var _ io.WriterAt = FileAdapter{}
+
+type FileSliceAdapter struct {
+	FAdapter FileAdapter
+	start    int
+	end      int
+}
+
+// Get implements SliceLike.
+func (f FileSliceAdapter) Get(idx int) (val byte) {
+	return f.FAdapter.Get(f.start + idx)
+}
+
+// Len implements SliceLike.
+func (f FileSliceAdapter) Len() int {
+	return f.end - f.start
+}
+
+// Set implements SliceLike.
+func (f FileSliceAdapter) Set(idx int, val byte) {
+	f.FAdapter.Set(f.start+idx, val)
+}
+
+// Slice implements SliceLike.
+func (f FileSliceAdapter) Slice(start int, end int) SliceLike[byte] {
+	assertIdxInRange(0, start, f.Len())
+	assertIdxInRange(0, end, f.Len())
+	return FileSliceAdapter{
+		FAdapter: f.FAdapter,
+		start:    f.start + start,
+		end:      f.start + end,
+	}
+}
+
+var _ SliceLike[byte] = FileSliceAdapter{}
+
+func assertIdxInRange(min int, idx int, maxExclusive int) {
+	if idx < min || idx >= maxExclusive {
+		panic(fmt.Sprintf("index %d is out of range [%d, %d)", idx, min, maxExclusive))
+	}
+}
