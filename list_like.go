@@ -379,8 +379,8 @@ func Clear[T any](list ListLike[T]) {
 	list.ChangeLen(-length)
 }
 func AppendV[T any](list ListLike[T], vals ...T) {
-	sVals := NewSliceAdapter(&vals)
-	Append(list, sVals)
+	sVals := NewSliceAdapter(vals)
+	Append(list, &sVals)
 }
 func Append[T any](list ListLike[T], vals SliceLike[T]) {
 	start := list.Len()
@@ -390,8 +390,8 @@ func Append[T any](list ListLike[T], vals SliceLike[T]) {
 	Copy(list, start, n, vals, 0, n)
 }
 func InsertV[T any](list ListLike[T], idx int, vals ...T) {
-	sVals := NewSliceAdapter(&vals)
-	Insert(list, idx, sVals)
+	sVals := NewSliceAdapter(vals)
+	Insert(list, idx, &sVals)
 }
 func Insert[T any](list ListLike[T], idx int, vals SliceLike[T]) {
 	removeIdx := list.Len() - 1
@@ -537,7 +537,7 @@ type QueueLike[T any] interface {
 	ListLike[T]
 	// Offset the start location (index/pointer/etc.) of this queue by
 	// the given delta. The new 'first' item in the queue should be the item
-	// previously located at `queue.GetPtr(0+delta)`.
+	// previously located at index `delta`
 	OffsetStart(delta int)
 }
 

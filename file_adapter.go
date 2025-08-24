@@ -139,22 +139,18 @@ type FileSliceAdapter struct {
 	end      int
 }
 
-// Get implements SliceLike.
 func (f FileSliceAdapter) Get(idx int) (val byte) {
 	return f.FAdapter.Get(f.start + idx)
 }
 
-// Len implements SliceLike.
 func (f FileSliceAdapter) Len() int {
 	return f.end - f.start
 }
 
-// Set implements SliceLike.
 func (f FileSliceAdapter) Set(idx int, val byte) {
 	f.FAdapter.Set(f.start+idx, val)
 }
 
-// Slice implements SliceLike.
 func (f FileSliceAdapter) Slice(start int, end int) SliceLike[byte] {
 	assertIdxInRange(0, start, f.Len())
 	assertIdxInRange(0, end, f.Len())
