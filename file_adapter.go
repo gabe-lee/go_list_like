@@ -1,7 +1,6 @@
 package go_list_like
 
 import (
-	"fmt"
 	"io"
 	"os"
 	"syscall"
@@ -9,7 +8,7 @@ import (
 )
 
 type FileAdapter struct {
-	File os.File
+	File *os.File
 }
 
 func (f FileAdapter) Cap() int {
@@ -45,12 +44,12 @@ func (f FileAdapter) Set(idx int, val byte) {
 	f.File.WriteAt(b[:], int64(idx))
 }
 func (f FileAdapter) Slice(start int, end int) SliceLike[byte] {
-	assertIdxInRange(0, start, f.Len())
-	assertIdxInRange(0, end, f.Len())
-	return FileSliceAdapter{
+	newStart := clamp(0, start, f.Len())
+	newEnd := clamp(newStart, end, f.Len())
+	return &FileSliceAdapter{
 		FAdapter: f,
-		start:    start,
-		end:      end,
+		start:    newStart,
+		end:      newEnd,
 	}
 }
 
@@ -139,32 +138,68 @@ type FileSliceAdapter struct {
 	end      int
 }
 
-func (f FileSliceAdapter) Get(idx int) (val byte) {
+func (f *FileSliceAdapter) Get(idx int) (val byte) {
 	return f.FAdapter.Get(f.start + idx)
 }
 
-func (f FileSliceAdapter) Len() int {
+func (f *FileSliceAdapter) Len() int {
 	return f.end - f.start
 }
 
-func (f FileSliceAdapter) Set(idx int, val byte) {
+func (f *FileSliceAdapter) Set(idx int, val byte) {
 	f.FAdapter.Set(f.start+idx, val)
 }
 
-func (f FileSliceAdapter) Slice(start int, end int) SliceLike[byte] {
-	assertIdxInRange(0, start, f.Len())
-	assertIdxInRange(0, end, f.Len())
-	return FileSliceAdapter{
+func (f *FileSliceAdapter) Read(b []byte) (n int, err error) {
+	maxRead := min(f.Len(), len(b))
+	n, err = f.FAdapter.ReadAt(b[:maxRead], int64(f.start))
+	f.start += n
+	if err == nil && n == 0 {
+		err = io.EOF
+	}
+	return
+}
+func (f *FileSliceAdapter) ReadAt(b []byte, off int64) (n int, err error) {
+	maxRead := min(0, f.end-(f.start+int(off)), len(b))
+	n, err = f.FAdapter.ReadAt(b[:maxRead], int64(f.start))
+	if err == nil && n != len(b) {
+		err = io.EOF
+	}
+	return
+}
+
+func (f *FileSliceAdapter) WriteAt(b []byte, off int64) (n int, err error) {
+	maxWrite := min(0, f.end-(f.start+int(off)), len(b))
+	n, err = f.FAdapter.WriteAt(b[:maxWrite], int64(f.start))
+	if err == nil && n != len(b) {
+		err = io.EOF
+	}
+	return
+}
+
+func (f *FileSliceAdapter) Slice(start int, end int) SliceLike[byte] {
+	newStart := f.start + start
+	newStart = clamp(f.start, newStart, f.end)
+	newEnd := f.start + end
+	newEnd = clamp(newStart, newEnd, f.end)
+	return &FileSliceAdapter{
 		FAdapter: f.FAdapter,
-		start:    f.start + start,
-		end:      f.start + end,
+		start:    newStart,
+		end:      newEnd,
 	}
 }
 
-var _ SliceLike[byte] = FileSliceAdapter{}
+func (f *FileSliceAdapter) OffsetStart(delta int) {
+	newStart := f.start + delta
+	newStart = clamp(f.start, newStart, f.end)
+	f.start = newStart
+}
 
-func assertIdxInRange(min int, idx int, maxExclusive int) {
-	if idx < min || idx >= maxExclusive {
-		panic(fmt.Sprintf("index %d is out of range [%d, %d)", idx, min, maxExclusive))
-	}
+var _ QueueLike[byte] = (*FileSliceAdapter)(nil)
+var _ io.Reader = (*FileSliceAdapter)(nil)
+var _ io.ReaderAt = (*FileSliceAdapter)(nil)
+var _ io.WriterAt = (*FileSliceAdapter)(nil)
+
+func clamp(minIdx int, idx int, maxIdx int) int {
+	return max(minIdx, min(idx, maxIdx))
 }

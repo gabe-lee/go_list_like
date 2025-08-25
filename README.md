@@ -2,12 +2,13 @@
 Interface for user-defined types or wrappers around 3rd-party types that can behave like a traditional 'List' or 'Vector'
   - [Why](#why)
   - [Installation](#installation)
+  - [Example](#example)
   - [Interfaces](#interfaces)
     - [SliceLike[T]](#sliceliket)
     - [ListLike[T]](#listliket)
     - [QueueLike[T]](#queueliket)
     - [MemSliceLike[T]](#memsliceliket)
-  - [Example](#example)
+  - [Additionl Functions](#additional-functions)
 ## Why?
 This package provides a simple interface for things that can behave like a 'List' or 'Vector', but may be user-defined data structures with complex memory layouts and/or traversal methods. By implementing these interfaces, one can avoid an intermediate temporary slice to use as an interface between two different incompatible data structures.
 
@@ -21,16 +22,43 @@ go get github.com/gabe-lee/go_list_like@latest
 ```
 Then implement one or more of the defined interfaces for your data structure in order to access a collection of additional functions that can automatically operate on your data structure
 
-The provided wrapper type `SliceAdapter[T]` can be used with a standard golang slice `[]T`, which implements:
+The provided wrapper types `SliceAdapter[T]` and `SliceAdapterIndirect[T]` can be used with a standard golang slice `[]T`, which implements:
   - SliceLike[T] + MemSliceLike[T]
   - ListLike[T] + MemListLike[T]
   - QueueLike[T] + MemQueueLike[T]
-  - Also io.Reader, io.Writer, io.ReaderAt, and io.WriterAt in a generic manner for all types
+  - io.Reader, io.Writer, io.ReaderAt, and io.WriterAt in a generic manner for all types
 
-Also, the provided wrapper type `FileAdapter[T]` can be used with a standard golang file `os.File`, which implements:
+Also, the provided wrapper type `FileAdapter` can be used with a standard golang file `os.File`, which implements:
   - SliceLike[byte] 
   - ListLike[byte]
   - Also all other interfaces normally implemented by `os.File`
+  - `FileAdapter.Slice(start, end)` returns a `*FileSliceAdapter` that implements:
+    - SliceLike[byte]
+	- QueueLike[byte]
+	- io.Reader, io.ReaderAt, io.WriterAt
+
+[Back to Top](#go_list_like)
+## Example
+```golang
+import (
+    "fmt"
+    ll "github.com/gabe-lee/go_list_like"
+)
+
+func main() {
+    mySlice := []byte("Hello World")
+	mySliceLike := ll.NewSliceAdapterIndirect(&mySlice)
+	fmt.Printf("%s\n", mySlice)
+	ll.AppendV(mySliceLike, '!')
+	ll.Delete(mySliceLike, 5, 1)
+	fmt.Printf("%s\n", mySlice)
+}
+```
+Output:
+```
+Hello World
+HelloWorld!
+```
 
 [Back to Top](#go_list_like)
 ## Interfaces
@@ -42,6 +70,11 @@ type SliceLike[T any] interface {
 	Get(idx int) (val T)
 	// Set the value at the provided index to the given value
 	Set(idx int, val T)
+	// Return another SliceLike[T] that holds values in range [start:end),
+	// where subSlice[0] == slice[start]
+	//
+	// Analogous to slice[start:end]
+	Slice(start int, end int) SliceLike[T]
 	// Return the current number of values in the slice/list
 	//
 	// All values less than this length MUST be valid for Get() and Set()
@@ -51,6 +84,7 @@ type SliceLike[T any] interface {
 To get:
 ```golang
 func Len[T any](slice SliceLike[T]) int 
+func Slice[T any](slice SliceLike[T], start int, end int) SliceLike[T]
 func IdxInRange[T any](slice SliceLike[T], idx int) bool
 func IdxUnderLen[T any](slice SliceLike[T], idx int) bool
 func IsEmpty[T any](slice SliceLike[T]) bool
@@ -73,8 +107,9 @@ func Swap[T any](slice SliceLike[T], idxA int, idxB int)
 func TrySwap[T any](slice SliceLike[T], idxA int, idxB int) (ok bool)
 func Move[T any](slice SliceLike[T], oldIdx int, newIdx int)
 func TryMove[T any](slice SliceLike[T], oldIdx int, newIdx int) (ok bool)
-func Copy[T any](dest SliceLike[T], destStart, destLen int, source SliceLike[T], srcStart, srcLen int) (n int)
-func TryCopy[T any](dest SliceLike[T], destStart, destLen int, source SliceLike[T], srcStart, srcLen int) (n int, ok bool)
+func Copy[T any](dest SliceLike[T], destStart int, source SliceLike[T], srcStart int, copyLen int) (nCopied int)
+func TryCopy[T any](dest SliceLike[T], destStart int, source SliceLike[T], srcStart int, copyLen int) (nCopied int, ok bool) 
+func Swizzle[T any, I Index](slices SliceLike[SliceLike[T]], selectors SliceLike[I], outputList ListLike[T])
 func IsSorted[T any](slice SliceLike[T], greaterThan func(a T, b T) bool) bool
 func IsSortedImplicit[T cmp.Ordered](slice SliceLike[T]) bool
 func Sort[T any](slice SliceLike[T], greaterThan func(a T, b T) bool)
@@ -135,7 +170,7 @@ func TryPop[T any](list ListLike[T]) (val T, ok bool)
 Implement:
 ```golang
 type QueueLike[T any] interface {
-	ListLike[T]
+	SliceLike[T]
 	// Offset the start location (index/pointer/etc.) of this queue by
 	// the given delta. The new 'first' item in the queue should be the item
 	// previously located at `queue.GetPtr(0+delta)`.
@@ -144,8 +179,13 @@ type QueueLike[T any] interface {
 ```
 To get:
 ```golang
-// ListLike[T] funcs...
-func Dequeue[T any](queueLike QueueLike[T], count int, outputList ListLike[T])
+// SliceLike[T] funcs...
+func Dequeue[T any](queue QueueLike[T], count int, outputList ListLike[T])
+func TryDequeue[T any](queue QueueLike[T], count int, outputList ListLike[T]) (ok bool)
+func Peek[T any](queue QueueLike[T], count int) (peekSlice SliceLike[T]) 
+func TryPeek[T any](queue QueueLike[T], count int) (peekSlice SliceLike[T], ok bool) 
+func Discard[T any](queue QueueLike[T], count int)
+func TryDiscard[T any](queue QueueLike[T], count int) (ok bool) 
 ```
 
 [Back to Top](#go_list_like)
@@ -164,26 +204,113 @@ To get:
 func GetPtr[T any](memSliceLike MemSliceLike[T], idx int) *T
 func TryGetPtr[T any](memSliceLike MemSliceLike[T], idx int) (ptr *T, ok bool)
 ```
-
-[Back to Top](#go_list_like)
-## Example
+## Additional Functions
+In addition to the normal functions supplied to implementors of the above interfaces, a number of helper functions are included for less cumbersome common use cases:
 ```golang
-import (
-    "fmt"
-    ll "github.com/gabe-lee/go_list_like"
-)
-
-func main() {
-    mySlice := []byte("Hello World")
-	mySliceLike := ll.NewSliceAdapter(&mySlice)
-	fmt.Printf("%s\n", mySlice)
-	ll.AppendV(mySliceLike, '!')
-	ll.Delete(mySliceLike, 5, 1)
-	fmt.Printf("%s\n", mySlice)
-}
-```
-Output:
-```
-Hello World
-HelloWorld!
+// slice[idx] = slice[idx] + val
+func SetAdd[T number](slice SliceLike[T], idx int, val T)
+// return slice[idx] + val
+func GetAdd[T number](slice SliceLike[T], idx int, val T) (result T)
+// slice[idx] = slice[idx] - val
+func SetSubtract[T number](slice SliceLike[T], idx int, val T)
+// return slice[idx] - val
+func GetSubtract[T number](slice SliceLike[T], idx int, val T) (result T)
+// slice[idx] = slice[idx] * val
+func SetMultiply[T number](slice SliceLike[T], idx int, val T)
+// return slice[idx] * val
+func GetMultiply[T number](slice SliceLike[T], idx int, val T) (result T)
+// slice[idx] = slice[idx] / val
+func SetDivide[T number](slice SliceLike[T], idx int, val T)
+// return slice[idx] / val
+func GetDivide[T number](slice SliceLike[T], idx int, val T) (result T)
+// slice[idx] = slice[idx] % val
+func SetModulo[T integer](slice SliceLike[T], idx int, val T)
+// return slice[idx] % val
+func GetModulo[T integer](slice SliceLike[T], idx int, val T) (result T)
+// return slice[idx] % val, slice[idx] - (slice[idx] % val)
+func GetModRem[T integer](slice SliceLike[T], idx int, val T) (mod T, rem T)
+// slice[idx] = math.Mod(slice[idx], val)
+func SetFModulo[T float](slice SliceLike[T], idx int, val T)
+// return math.Mod(slice[idx], val)
+func GetFModulo[T float](slice SliceLike[T], idx int, val T) (result T)
+// return math.Mod(slice[idx], val), slice[idx] - math.Mod(slice[idx], val)
+func GetFModRem[T float](slice SliceLike[T], idx int, val T) (mod T, rem T)
+// slice[idx] = slice[idx] & val
+func SetBitAnd[T integer](slice SliceLike[T], idx int, val T)
+// return slice[idx] & val
+func GetBitAnd[T integer](slice SliceLike[T], idx int, val T) (result T)
+// slice[idx] = slice[idx] & val
+func SetBitOr[T integer](slice SliceLike[T], idx int, val T)
+// return slice[idx] & val
+func GetBitOr[T integer](slice SliceLike[T], idx int, val T) (result T)
+// slice[idx] = slice[idx] ^ val
+func SetBitXor[T integer](slice SliceLike[T], idx int, val T)
+// return slice[idx] ^ val
+func GetBitXor[T integer](slice SliceLike[T], idx int, val T) (result T)
+// slice[idx] = ^slice[idx]
+func SetBitInvert[T integer](slice SliceLike[T], idx int)
+// return ^slice[idx]
+func GetBitInvert[T integer](slice SliceLike[T], idx int) (result T)
+// slice[idx] = slice[idx] << val
+func SetBitLsh[T integer](slice SliceLike[T], idx int, val T)
+// return slice[idx] << val
+func GetBitLsh[T integer](slice SliceLike[T], idx int, val T) (result T)
+// slice[idx] = slice[idx] >> val
+func SetBitRsh[T integer](slice SliceLike[T], idx int, val T)
+// return slice[idx] >> val
+func GetBitRsh[T integer](slice SliceLike[T], idx int, val T) (result T)
+// return slice[idx] < val
+func GetLessThan[T cmp.Ordered](slice SliceLike[T], idx int, val T) bool
+// return slice[idx1] < slice[idx2]
+func GetLessThan2[T cmp.Ordered](slice SliceLike[T], idx1 int, idx2 int) bool
+// return slice[idx] <= val
+func GetLessThanEqual[T cmp.Ordered](slice SliceLike[T], idx int, val T) bool
+// return slice[idx1] <= slice[idx2]
+func GetLessThanEqual2[T cmp.Ordered](slice SliceLike[T], idx1 int, idx2 int) bool
+// return slice[idx] > val
+func GetGreaterThan[T cmp.Ordered](slice SliceLike[T], idx int, val T) bool
+// return slice[idx1] > slice[idx2]
+func GetGreaterThan2[T cmp.Ordered](slice SliceLike[T], idx1 int, idx2 int) bool
+// return slice[idx] >= val
+func GetGreaterThanEqual[T cmp.Ordered](slice SliceLike[T], idx int, val T) bool
+// return slice[idx1] >= slice[idx2]
+func GetGreaterThanEqual2[T cmp.Ordered](slice SliceLike[T], idx1 int, idx2 int) bool
+// return slice[idx] == val
+func GetEquals[T cmp.Ordered](slice SliceLike[T], idx int, val T) bool
+// return slice[idx1] == slice[idx2]
+func GetEquals2[T cmp.Ordered](slice SliceLike[T], idx1 int, idx2 int) bool
+// return slice[idx] != val
+func GetNotEquals[T cmp.Ordered](slice SliceLike[T], idx int, val T) bool
+// return slice[idx1] != slice[idx2]
+func GetNotEquals2[T cmp.Ordered](slice SliceLike[T], idx1 int, idx2 int) bool
+// return min(slice[indexes[0]], slice[indexes[1]], ...)
+func GetMinV[T cmp.Ordered](slice SliceLike[T], indexes ...int) T
+// return min(slice[indexes[0]], slice[indexes[1]], ...)
+func GetMin[T cmp.Ordered, I Index](slice SliceLike[T], indexes SliceLike[I]) T
+// slice[setIdx] = min(slice[indexes[0]], slice[indexes[1]], ...)
+func SetMinV[T cmp.Ordered](slice SliceLike[T], setIdx int, indexes ...int)
+// slice[setIdx] = min(slice[indexes[0]], slice[indexes[1]], ...)
+func SetMin[T cmp.Ordered, I Index](slice SliceLike[T], setIdx int, indexes SliceLike[I])
+// return max(slice[indexes[0]], slice[indexes[1]], ...)
+func GetMaxV[T cmp.Ordered](slice SliceLike[T], indexes ...int) T
+// return max(slice[indexes[0]], slice[indexes[1]], ...)
+func GetMax[T cmp.Ordered, I Index](slice SliceLike[T], indexes SliceLike[I]) T
+// slice[setIdx] = min(slice[indexes[0]], slice[indexes[1]], ...)
+func SetMaxV[T cmp.Ordered](slice SliceLike[T], setIdx int, indexes ...int)
+// slice[setIdx] = min(slice[indexes[0]], slice[indexes[1]], ...)
+func SetMax[T cmp.Ordered, I Index](slice SliceLike[T], setIdx int, indexes SliceLike[I])
+// return min(maxVal, max(slice[idx], minVal))
+func GetClamped[T cmp.Ordered](slice SliceLike[T], idx int, minVal T, maxVal T) T
+// slice[idx] = min(maxVal, max(slice[idx], minVal))
+func SetClamped[T cmp.Ordered](slice SliceLike[T], idx int, minVal T, maxVal T)
+// return *(*TT)(unsafe.Pointer(&slice[idx]))
+func GetUnsafeCast[T any, TT any](slice SliceLike[T], idx int) (val TT)
+// return *(*TT)(unsafe.Pointer(&slice[idx]))
+func GetUnsafePtrCast[T any, TT any](slice MemSliceLike[T], idx int) (val *TT)
+// Decode a rune from the byte slice at the given index
+func GetRune(slice SliceLike[byte], idx int) (r rune, bytes int, ok bool)
+// Write a rune to the byte slice at given index
+func SetRune(slice SliceLike[byte], idx int, r rune) (bytes int, ok bool)
+// Append a rune to the end of the byte slice
+func AppendRune(list ListLike[byte], r rune) (bytes int, ok bool)
 ```

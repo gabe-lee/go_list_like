@@ -215,6 +215,76 @@ func GetNotEquals2[T cmp.Ordered](slice SliceLike[T], idx1 int, idx2 int) bool {
 	return slice.Get(idx1) != slice.Get(idx2)
 }
 
+// return min(slice[indexes[0]], slice[indexes[1]], ...)
+func GetMinV[T cmp.Ordered](slice SliceLike[T], indexes ...int) T {
+	idxSlice := NewSliceAdapter(indexes)
+	return GetMin(slice, &idxSlice)
+}
+
+// return min(slice[indexes[0]], slice[indexes[1]], ...)
+func GetMin[T cmp.Ordered, I Index](slice SliceLike[T], indexes SliceLike[I]) T {
+	v := slice.Get(int(indexes.Get(0)))
+	i := 1
+	limit := indexes.Len()
+	for i < limit {
+		v = min(v, slice.Get(int(indexes.Get(0))))
+	}
+	return v
+}
+
+// slice[setIdx] = min(slice[indexes[0]], slice[indexes[1]], ...)
+func SetMinV[T cmp.Ordered](slice SliceLike[T], setIdx int, indexes ...int) {
+	idxSlice := NewSliceAdapter(indexes)
+	SetMin(slice, setIdx, &idxSlice)
+}
+
+// slice[setIdx] = min(slice[indexes[0]], slice[indexes[1]], ...)
+func SetMin[T cmp.Ordered, I Index](slice SliceLike[T], setIdx int, indexes SliceLike[I]) {
+	v := GetMin(slice, indexes)
+	slice.Set(setIdx, v)
+}
+
+// return max(slice[indexes[0]], slice[indexes[1]], ...)
+func GetMaxV[T cmp.Ordered](slice SliceLike[T], indexes ...int) T {
+	idxSlice := NewSliceAdapter(indexes)
+	return GetMax(slice, &idxSlice)
+}
+
+// return max(slice[indexes[0]], slice[indexes[1]], ...)
+func GetMax[T cmp.Ordered, I Index](slice SliceLike[T], indexes SliceLike[I]) T {
+	v := slice.Get(int(indexes.Get(0)))
+	i := 1
+	limit := indexes.Len()
+	for i < limit {
+		v = max(v, slice.Get(int(indexes.Get(0))))
+	}
+	return v
+}
+
+// slice[setIdx] = min(slice[indexes[0]], slice[indexes[1]], ...)
+func SetMaxV[T cmp.Ordered](slice SliceLike[T], setIdx int, indexes ...int) {
+	idxSlice := NewSliceAdapter(indexes)
+	SetMax(slice, setIdx, &idxSlice)
+}
+
+// slice[setIdx] = min(slice[indexes[0]], slice[indexes[1]], ...)
+func SetMax[T cmp.Ordered, I Index](slice SliceLike[T], setIdx int, indexes SliceLike[I]) {
+	v := GetMax(slice, indexes)
+	slice.Set(setIdx, v)
+}
+
+// return min(maxVal, max(slice[idx], minVal))
+func GetClamped[T cmp.Ordered](slice SliceLike[T], idx int, minVal T, maxVal T) T {
+	v := slice.Get(idx)
+	return min(maxVal, max(v, minVal))
+}
+
+// slice[idx] = min(maxVal, max(slice[idx], minVal))
+func SetClamped[T cmp.Ordered](slice SliceLike[T], idx int, minVal T, maxVal T) {
+	v := GetClamped(slice, idx, minVal, maxVal)
+	slice.Set(idx, v)
+}
+
 // return *(*TT)(unsafe.Pointer(&slice[idx]))
 func GetUnsafeCast[T any, TT any](slice SliceLike[T], idx int) (val TT) {
 	v := slice.Get(idx)

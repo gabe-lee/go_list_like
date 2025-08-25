@@ -8,12 +8,12 @@ const (
 	surrogateMin = 0xD800
 	surrogateMax = 0xDFFF
 
-	t1 = 0b00000000
+	// t1 = 0b00000000
 	tx = 0b10000000
 	t2 = 0b11000000
 	t3 = 0b11100000
 	t4 = 0b11110000
-	t5 = 0b11111000
+	// t5 = 0b11111000
 
 	maskx = 0b00111111
 	mask2 = 0b00011111
@@ -128,15 +128,16 @@ func GetRune(slice SliceLike[byte], idx int) (r rune, bytes int, ok bool) {
 	return rune(b0&mask4)<<18 | rune(b1&maskx)<<12 | rune(b2&maskx)<<6 | rune(b3&maskx), 4, true
 }
 
+// Write a rune to the byte slice at given index
 func SetRune(slice SliceLike[byte], idx int, r rune) (bytes int, ok bool) {
-	// This function is inlineable for fast handling of ASCII.
 	if uint32(r) <= rune1Max {
 		slice.Set(idx, byte(r))
 		return 1, true
 	}
-	return encodeRuneNonASCII(slice, idx, r)
+	return setRuneNonASCII(slice, idx, r)
 }
 
+// Append a rune to the end of the byte slice
 func AppendRune(list ListLike[byte], r rune) (bytes int, ok bool) {
 	len := utf8.RuneLen(r)
 	GrowCapIfNeeded(list, len)
@@ -145,8 +146,7 @@ func AppendRune(list ListLike[byte], r rune) (bytes int, ok bool) {
 	return SetRune(list, idx, r)
 }
 
-func encodeRuneNonASCII(slice SliceLike[byte], idx int, r rune) (bytes int, ok bool) {
-	// Negative values are erroneous. Making it unsigned addresses the problem.
+func setRuneNonASCII(slice SliceLike[byte], idx int, r rune) (bytes int, ok bool) {
 	switch i := uint32(r); {
 	case i <= rune2Max:
 		slice.Set(idx, t2|byte(r>>6))
