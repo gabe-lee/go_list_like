@@ -207,58 +207,62 @@ func TryGetPtr[T any](memSliceLike MemSliceLike[T], idx int) (ptr *T, ok bool)
 ## Additional Functions
 In addition to the normal functions supplied to implementors of the above interfaces, a number of helper functions are included for less cumbersome common use cases:
 ```golang
+// oldVal := slice[idx]
+// slice[idx] = val
+// return oldVal != val
+func SetChanged[T Equatable](slice SliceLike[T], idx int, val T) (didChange bool) 
 // slice[idx] = slice[idx] + val
-func SetAdd[T number](slice SliceLike[T], idx int, val T)
+func SetAdd[T Number](slice SliceLike[T], idx int, val T)
 // return slice[idx] + val
-func GetAdd[T number](slice SliceLike[T], idx int, val T) (result T)
+func GetAdd[T Number](slice SliceLike[T], idx int, val T) (result T)
 // slice[idx] = slice[idx] - val
-func SetSubtract[T number](slice SliceLike[T], idx int, val T)
+func SetSubtract[T Number](slice SliceLike[T], idx int, val T)
 // return slice[idx] - val
-func GetSubtract[T number](slice SliceLike[T], idx int, val T) (result T)
+func GetSubtract[T Number](slice SliceLike[T], idx int, val T) (result T)
 // slice[idx] = slice[idx] * val
-func SetMultiply[T number](slice SliceLike[T], idx int, val T)
+func SetMultiply[T Number](slice SliceLike[T], idx int, val T)
 // return slice[idx] * val
-func GetMultiply[T number](slice SliceLike[T], idx int, val T) (result T)
+func GetMultiply[T Number](slice SliceLike[T], idx int, val T) (result T)
 // slice[idx] = slice[idx] / val
-func SetDivide[T number](slice SliceLike[T], idx int, val T)
+func SetDivide[T Number](slice SliceLike[T], idx int, val T)
 // return slice[idx] / val
-func GetDivide[T number](slice SliceLike[T], idx int, val T) (result T)
+func GetDivide[T Number](slice SliceLike[T], idx int, val T) (result T)
 // slice[idx] = slice[idx] % val
-func SetModulo[T integer](slice SliceLike[T], idx int, val T)
+func SetModulo[T Integer](slice SliceLike[T], idx int, val T)
 // return slice[idx] % val
-func GetModulo[T integer](slice SliceLike[T], idx int, val T) (result T)
+func GetModulo[T Integer](slice SliceLike[T], idx int, val T) (result T)
 // return slice[idx] % val, slice[idx] - (slice[idx] % val)
-func GetModRem[T integer](slice SliceLike[T], idx int, val T) (mod T, rem T)
+func GetModRem[T Integer](slice SliceLike[T], idx int, val T) (mod T, rem T)
 // slice[idx] = math.Mod(slice[idx], val)
-func SetFModulo[T float](slice SliceLike[T], idx int, val T)
+func SetFModulo[T Float](slice SliceLike[T], idx int, val T)
 // return math.Mod(slice[idx], val)
-func GetFModulo[T float](slice SliceLike[T], idx int, val T) (result T)
+func GetFModulo[T Float](slice SliceLike[T], idx int, val T) (result T)
 // return math.Mod(slice[idx], val), slice[idx] - math.Mod(slice[idx], val)
-func GetFModRem[T float](slice SliceLike[T], idx int, val T) (mod T, rem T)
+func GetFModRem[T Float](slice SliceLike[T], idx int, val T) (mod T, rem T)
 // slice[idx] = slice[idx] & val
-func SetBitAnd[T integer](slice SliceLike[T], idx int, val T)
+func SetBitAnd[T Integer](slice SliceLike[T], idx int, val T)
 // return slice[idx] & val
-func GetBitAnd[T integer](slice SliceLike[T], idx int, val T) (result T)
+func GetBitAnd[T Integer](slice SliceLike[T], idx int, val T) (result T)
 // slice[idx] = slice[idx] & val
-func SetBitOr[T integer](slice SliceLike[T], idx int, val T)
+func SetBitOr[T Integer](slice SliceLike[T], idx int, val T)
 // return slice[idx] & val
-func GetBitOr[T integer](slice SliceLike[T], idx int, val T) (result T)
+func GetBitOr[T Integer](slice SliceLike[T], idx int, val T) (result T)
 // slice[idx] = slice[idx] ^ val
-func SetBitXor[T integer](slice SliceLike[T], idx int, val T)
+func SetBitXor[T Integer](slice SliceLike[T], idx int, val T)
 // return slice[idx] ^ val
-func GetBitXor[T integer](slice SliceLike[T], idx int, val T) (result T)
+func GetBitXor[T Integer](slice SliceLike[T], idx int, val T) (result T)
 // slice[idx] = ^slice[idx]
-func SetBitInvert[T integer](slice SliceLike[T], idx int)
+func SetBitInvert[T Integer](slice SliceLike[T], idx int)
 // return ^slice[idx]
-func GetBitInvert[T integer](slice SliceLike[T], idx int) (result T)
+func GetBitInvert[T Integer](slice SliceLike[T], idx int) (result T)
 // slice[idx] = slice[idx] << val
-func SetBitLsh[T integer](slice SliceLike[T], idx int, val T)
+func SetBitLsh[T Integer](slice SliceLike[T], idx int, val T)
 // return slice[idx] << val
-func GetBitLsh[T integer](slice SliceLike[T], idx int, val T) (result T)
+func GetBitLsh[T Integer](slice SliceLike[T], idx int, val T) (result T)
 // slice[idx] = slice[idx] >> val
-func SetBitRsh[T integer](slice SliceLike[T], idx int, val T)
+func SetBitRsh[T Integer](slice SliceLike[T], idx int, val T)
 // return slice[idx] >> val
-func GetBitRsh[T integer](slice SliceLike[T], idx int, val T) (result T)
+func GetBitRsh[T Integer](slice SliceLike[T], idx int, val T) (result T)
 // return slice[idx] < val
 func GetLessThan[T cmp.Ordered](slice SliceLike[T], idx int, val T) bool
 // return slice[idx1] < slice[idx2]
