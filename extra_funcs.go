@@ -27,15 +27,6 @@ type Equatable interface {
 		~float32 | ~float64 | ~unsafe.Pointer | ~bool | ~string
 }
 
-// oldVal := slice[idx]
-// slice[idx] = val
-// return oldVal != val
-func SetChanged[T Equatable](slice SliceLike[T], idx int, val T) (didChange bool) {
-	v := slice.Get(idx)
-	slice.Set(idx, val)
-	return v != val
-}
-
 // slice[idx] = slice[idx] + val
 func SetAdd[T Number](slice SliceLike[T], idx int, val T) {
 	slice.Set(idx, slice.Get(idx)+val)
@@ -300,10 +291,48 @@ func SetClamped[T cmp.Ordered](slice SliceLike[T], idx int, minVal T, maxVal T) 
 	slice.Set(idx, v)
 }
 
+// oldVal := slice[idx]
+// slice[idx] = val
+// return oldVal != val
+func SetChanged[T Equatable](slice SliceLike[T], idx int, val T) (didChange bool) {
+	v := slice.Get(idx)
+	slice.Set(idx, val)
+	return v != val
+}
+
 // return *(*TT)(unsafe.Pointer(&slice[idx]))
 func GetUnsafeCast[T any, TT any](slice SliceLike[T], idx int) (val TT) {
 	v := slice.Get(idx)
 	return *(*TT)(unsafe.Pointer(&v))
+}
+
+// slice[idx] = *(*T)(unsafe.Pointer(&val))
+func SetUnsafeCast[T any, TT any](slice SliceLike[T], idx int, val TT) {
+	v := *(*T)(unsafe.Pointer(&val))
+	*(*TT)(unsafe.Pointer(&v)) = val
+}
+
+// val_T := *(*T)(unsafe.Pointer(&val))
+// oldVal_TT := *(*TT)(unsafe.Pointer(&slice[idx]))
+// slice[idx] = val_T
+// return oldVal_TT != val
+func SetUnsafeCastChanged[T any, TT Equatable](slice SliceLike[T], idx int, val TT) (didChange bool) {
+	castNewVal := *(*T)(unsafe.Pointer(&val))
+	v := slice.Get(idx)
+	oldVal := *(*TT)(unsafe.Pointer(&v))
+	slice.Set(idx, castNewVal)
+	return oldVal != val
+}
+
+// val_T := *(*T)(unsafe.Pointer(&val))
+// oldVal_T := slice[idx]
+// slice[idx] = val_T
+// return oldVal_T != val_T
+func SetUnsafeCastChangedAlt[T Equatable, TT any](slice SliceLike[T], idx int, val TT) (didChange bool) {
+	castNewVal := *(*T)(unsafe.Pointer(&val))
+	v := slice.Get(idx)
+	slice.Set(idx, castNewVal)
+	return v != castNewVal
 }
 
 // return *(*TT)(unsafe.Pointer(&slice[idx]))

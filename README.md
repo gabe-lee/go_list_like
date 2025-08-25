@@ -311,6 +311,18 @@ func SetClamped[T cmp.Ordered](slice SliceLike[T], idx int, minVal T, maxVal T)
 func GetUnsafeCast[T any, TT any](slice SliceLike[T], idx int) (val TT)
 // return *(*TT)(unsafe.Pointer(&slice[idx]))
 func GetUnsafePtrCast[T any, TT any](slice MemSliceLike[T], idx int) (val *TT)
+// slice[idx] = *(*T)(unsafe.Pointer(&val))
+func SetUnsafeCast[T any, TT any](slice SliceLike[T], idx int, val TT)
+// val_T := *(*T)(unsafe.Pointer(&val))
+// oldVal_TT := *(*TT)(unsafe.Pointer(&slice[idx]))
+// slice[idx] = val_T
+// return oldVal_TT != val
+func SetUnsafeCastChanged[T any, TT Equatable](slice SliceLike[T], idx int, val TT) (didChange bool)
+// val_T := *(*T)(unsafe.Pointer(&val))
+// oldVal_T := slice[idx]
+// slice[idx] = val_T
+// return oldVal_T != val_T
+func SetUnsafeCastChangedAlt[T Equatable, TT any](slice SliceLike[T], idx int, val TT) (didChange bool)
 // Decode a rune from the byte slice at the given index
 func GetRune(slice SliceLike[byte], idx int) (r rune, bytes int, ok bool)
 // Write a rune to the byte slice at given index
