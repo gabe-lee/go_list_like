@@ -395,12 +395,24 @@ func AppendV[T any](list ListLike[T], vals ...T) {
 	sVals := NewSliceAdapter(vals)
 	Append(list, &sVals)
 }
+func AppendGetStartIdxV[T any](list ListLike[T], vals ...T) (startIdx int) {
+	sVals := NewSliceAdapter(vals)
+	return AppendGetStartIdx(list, &sVals)
+}
 func Append[T any](list ListLike[T], vals SliceLike[T]) {
 	start := list.Len()
 	n := vals.Len()
 	GrowCapIfNeeded(list, n)
 	GrowLen(list, n)
 	Copy(list, start, vals, 0, n)
+}
+func AppendGetStartIdx[T any](list ListLike[T], vals SliceLike[T]) (startIdx int) {
+	startIdx = list.Len()
+	n := vals.Len()
+	GrowCapIfNeeded(list, n)
+	GrowLen(list, n)
+	Copy(list, startIdx, vals, 0, n)
+	return
 }
 func InsertV[T any](list ListLike[T], idx int, vals ...T) {
 	sVals := NewSliceAdapter(vals)
@@ -523,6 +535,20 @@ func Replace[T any](dest ListLike[T], destStart, destLen int, source SliceLike[T
 		Copy(dest, destStart, source, srcStart, srcLen)
 	}
 	return delta
+}
+
+func Push[T any](list ListLike[T], val T) {
+	idx := list.Len()
+	GrowCapIfNeeded(list, 1)
+	GrowLen(list, 1)
+	list.Set(idx, val)
+}
+func PushGetIdx[T any](list ListLike[T], val T) (idx int) {
+	idx = list.Len()
+	GrowCapIfNeeded(list, 1)
+	GrowLen(list, 1)
+	list.Set(idx, val)
+	return
 }
 
 func Pop[T any](list ListLike[T]) T {

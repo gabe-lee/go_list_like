@@ -153,7 +153,9 @@ func GrowCapIfNeeded[T any](list ListLike[T], nMoreItems int)
 func Cap[T any](list ListLike[T]) int
 func Clear[T any](list ListLike[T])
 func AppendV[T any](list ListLike[T], vals ...T) 
+func AppendGetStartIdxV[T any](list ListLike[T], vals ...T) (startIdx int)
 func Append[T any](list ListLike[T], vals SliceLike[T])
+func AppendGetStartIdx[T any](list ListLike[T], vals SliceLike[T]) (startIdx int)
 func InsertV[T any](list ListLike[T], idx int, vals ...T)
 func Insert[T any](list ListLike[T], idx int, vals SliceLike[T])
 func Delete[T any](list ListLike[T], idx int, count int)
@@ -161,6 +163,8 @@ func DeleteSparse[T any, I Index](list ListLike[T], deleteIndexSlice SliceLike[I
 func Remove[T any](list ListLike[T], idx int, count int, outputList ListLike[T])
 func RemoveSparse[T any, I Index](list ListLike[T], removeIndexSlice SliceLike[I], sortRemoveIndexes bool, outputList ListLike[T])
 func Replace[T any](dest ListLike[T], destStart, destLen int, source SliceLike[T], srcStart, srcLen int) (delta int)
+func Push[T any](list ListLike[T], val T)
+func PushGetIdx[T any](list ListLike[T], val T) (idx int)
 func Pop[T any](list ListLike[T]) T
 func TryPop[T any](list ListLike[T]) (val T, ok bool)
 ```
