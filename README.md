@@ -109,7 +109,10 @@ func Move[T any](slice SliceLike[T], oldIdx int, newIdx int)
 func TryMove[T any](slice SliceLike[T], oldIdx int, newIdx int) (ok bool)
 func Copy[T any](dest SliceLike[T], destStart int, source SliceLike[T], srcStart int, copyLen int) (nCopied int)
 func TryCopy[T any](dest SliceLike[T], destStart int, source SliceLike[T], srcStart int, copyLen int) (nCopied int, ok bool) 
+func CopyScalar[T any](dest SliceLike[T], destStart int, copyLen int, val T) (nCopied int)
+func TryCopyScalar[T any](dest SliceLike[T], destStart int, copyLen int, val T) (nCopied int, ok bool)
 func Swizzle[T any, I Index](slices SliceLike[SliceLike[T]], selectors SliceLike[I], outputList ListLike[T])
+func TrySwizzle[T any, I Index](slices SliceLike[SliceLike[T]], selectors SliceLike[I], outputList ListLike[T]) (ok bool)
 func IsSorted[T any](slice SliceLike[T], greaterThan func(a T, b T) bool) bool
 func IsSortedImplicit[T cmp.Ordered](slice SliceLike[T]) bool
 func Sort[T any](slice SliceLike[T], greaterThan func(a T, b T) bool)
@@ -152,10 +155,12 @@ func GrowCap[T any](list ListLike[T], n int)
 func GrowCapIfNeeded[T any](list ListLike[T], nMoreItems int)
 func Cap[T any](list ListLike[T]) int
 func Clear[T any](list ListLike[T])
+func AppendSlots[T any](list ListLike[T], count int) SliceLike[T]
 func AppendV[T any](list ListLike[T], vals ...T) 
 func AppendGetStartIdxV[T any](list ListLike[T], vals ...T) (startIdx int)
 func Append[T any](list ListLike[T], vals SliceLike[T])
 func AppendGetStartIdx[T any](list ListLike[T], vals SliceLike[T]) (startIdx int)
+func InsertSlots[T any](list ListLike[T], idx int, count int) SliceLike[T]
 func InsertV[T any](list ListLike[T], idx int, vals ...T)
 func Insert[T any](list ListLike[T], idx int, vals SliceLike[T])
 func Delete[T any](list ListLike[T], idx int, count int)

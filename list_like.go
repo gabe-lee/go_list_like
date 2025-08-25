@@ -155,16 +155,41 @@ func TryCopy[T any](dest SliceLike[T], destStart int, source SliceLike[T], srcSt
 	dIdx := destStart
 	sIdx := srcStart
 	n := 0
+	if !IdxInRange(dest, dIdx+nCopied-1) || !IdxInRange(source, sIdx+nCopied-1) {
+		return 0, false
+	}
 	for n < nCopied {
-		if !IdxInRange(dest, dIdx) || !IdxInRange(source, sIdx) {
-			return n, false
-		}
 		dest.Set(dIdx, source.Get(sIdx))
 		n += 1
 		dIdx += 1
 		sIdx += 1
 	}
 	return
+}
+func CopyScalar[T any](dest SliceLike[T], destStart int, copyLen int, val T) (nCopied int) {
+	nCopied = max(0, min(dest.Len()-destStart, copyLen))
+	dIdx := destStart
+	n := 0
+	for n < nCopied {
+		dest.Set(dIdx, val)
+		n += 1
+		dIdx += 1
+	}
+	return
+}
+func TryCopyScalar[T any](dest SliceLike[T], destStart int, copyLen int, val T) (nCopied int, ok bool) {
+	nCopied = max(0, min(dest.Len()-destStart, copyLen))
+	dIdx := destStart
+	n := 0
+	if !IdxInRange(dest, dIdx+nCopied-1) {
+		return 0, false
+	}
+	for n < nCopied {
+		dest.Set(dIdx, val)
+		n += 1
+		dIdx += 1
+	}
+	return n, true
 }
 func Swizzle[T any, I Index](slices SliceLike[SliceLike[T]], selectors SliceLike[I], outputList ListLike[T]) {
 	Clear(outputList)
@@ -175,6 +200,22 @@ func Swizzle[T any, I Index](slices SliceLike[SliceLike[T]], selectors SliceLike
 		AppendV(outputList, slices.Get(int(selectors.Get(i))).Get(i))
 		i += 1
 	}
+}
+func TrySwizzle[T any, I Index](slices SliceLike[SliceLike[T]], selectors SliceLike[I], outputList ListLike[T]) (ok bool) {
+	Clear(outputList)
+	GrowCapIfNeeded(outputList, selectors.Len())
+	i := 0
+	limit := selectors.Len()
+	for i < limit {
+		sel := int(selectors.Get(i))
+		slice := slices.Get(sel)
+		if !IdxInRange(slice, i) {
+			return false
+		}
+		AppendV(outputList, slice.Get(i))
+		i += 1
+	}
+	return true
 }
 func IsSorted[T any](slice SliceLike[T], greaterThan func(a T, b T) bool) bool {
 	var i int = 0
@@ -400,18 +441,20 @@ func AppendGetStartIdxV[T any](list ListLike[T], vals ...T) (startIdx int) {
 	return AppendGetStartIdx(list, &sVals)
 }
 func Append[T any](list ListLike[T], vals SliceLike[T]) {
+	slots := AppendSlots(list, vals.Len())
+	Copy(slots, 0, vals, 0, vals.Len())
+}
+func AppendSlots[T any](list ListLike[T], count int) SliceLike[T] {
 	start := list.Len()
-	n := vals.Len()
-	GrowCapIfNeeded(list, n)
-	GrowLen(list, n)
-	Copy(list, start, vals, 0, n)
+	GrowCapIfNeeded(list, count)
+	GrowLen(list, count)
+	end := list.Len()
+	return list.Slice(start, end)
 }
 func AppendGetStartIdx[T any](list ListLike[T], vals SliceLike[T]) (startIdx int) {
 	startIdx = list.Len()
-	n := vals.Len()
-	GrowCapIfNeeded(list, n)
-	GrowLen(list, n)
-	Copy(list, startIdx, vals, 0, n)
+	slots := AppendSlots(list, vals.Len())
+	Copy(slots, 0, vals, 0, vals.Len())
 	return
 }
 func InsertV[T any](list ListLike[T], idx int, vals ...T) {
@@ -419,8 +462,12 @@ func InsertV[T any](list ListLike[T], idx int, vals ...T) {
 	Insert(list, idx, &sVals)
 }
 func Insert[T any](list ListLike[T], idx int, vals SliceLike[T]) {
+	slots := InsertSlots(list, idx, vals.Len())
+	Copy(slots, 0, vals, 0, vals.Len())
+}
+func InsertSlots[T any](list ListLike[T], idx int, count int) SliceLike[T] {
 	removeIdx := list.Len() - 1
-	moveLen := vals.Len()
+	moveLen := count
 	GrowCapIfNeeded(list, moveLen)
 	GrowLen(list, moveLen)
 	insertIdx := removeIdx + moveLen
@@ -429,7 +476,7 @@ func Insert[T any](list ListLike[T], idx int, vals SliceLike[T]) {
 		removeIdx -= 1
 		insertIdx -= 1
 	}
-	Copy(list, idx, vals, 0, moveLen)
+	return list.Slice(idx, idx+count)
 }
 func Delete[T any](list ListLike[T], idx int, count int) {
 	listLen := list.Len()
