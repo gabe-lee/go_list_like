@@ -137,7 +137,43 @@ func TryMove[T any](slice SliceLike[T], oldIdx int, newIdx int) (ok bool) {
 	slice.Set(newIdx, slice.Get(oldIdx))
 	return true
 }
-func Copy[T any](dest SliceLike[T], destStart int, source SliceLike[T], srcStart int, copyLen int) (nCopied int) {
+func Copy[T any](dest SliceLike[T], source SliceLike[T]) (nCopied int) {
+	nCopied = min(dest.Len(), source.Len())
+	n := 0
+	for n < nCopied {
+		dest.Set(n, source.Get(n))
+		n += 1
+	}
+	return
+}
+func CopyScalar[T any](dest SliceLike[T], val T) (nCopied int) {
+	nCopied = dest.Len()
+	n := 0
+	for n < nCopied {
+		dest.Set(n, val)
+		n += 1
+	}
+	return
+}
+func CopyFromGoSlice[T any](dest SliceLike[T], source []T) (nCopied int) {
+	nCopied = min(dest.Len(), len(source))
+	n := 0
+	for n < nCopied {
+		dest.Set(n, source[n])
+		n += 1
+	}
+	return
+}
+func CopyToGoSlice[T any](dest []T, source SliceLike[T]) (nCopied int) {
+	nCopied = min(source.Len(), len(dest))
+	n := 0
+	for n < nCopied {
+		dest[n] = source.Get(n)
+		n += 1
+	}
+	return
+}
+func CopyAt[T any](dest SliceLike[T], destStart int, source SliceLike[T], srcStart int, copyLen int) (nCopied int) {
 	nCopied = max(0, min(dest.Len()-destStart, source.Len()-srcStart, copyLen))
 	dIdx := destStart
 	sIdx := srcStart
@@ -150,7 +186,7 @@ func Copy[T any](dest SliceLike[T], destStart int, source SliceLike[T], srcStart
 	}
 	return
 }
-func TryCopy[T any](dest SliceLike[T], destStart int, source SliceLike[T], srcStart int, copyLen int) (nCopied int, ok bool) {
+func TryCopyAt[T any](dest SliceLike[T], destStart int, source SliceLike[T], srcStart int, copyLen int) (nCopied int, ok bool) {
 	nCopied = max(0, min(dest.Len()-destStart, source.Len()-srcStart, copyLen))
 	dIdx := destStart
 	sIdx := srcStart
@@ -166,7 +202,7 @@ func TryCopy[T any](dest SliceLike[T], destStart int, source SliceLike[T], srcSt
 	}
 	return
 }
-func CopyScalar[T any](dest SliceLike[T], destStart int, copyLen int, val T) (nCopied int) {
+func CopyScalarAt[T any](dest SliceLike[T], destStart int, copyLen int, val T) (nCopied int) {
 	nCopied = max(0, min(dest.Len()-destStart, copyLen))
 	dIdx := destStart
 	n := 0
@@ -177,7 +213,7 @@ func CopyScalar[T any](dest SliceLike[T], destStart int, copyLen int, val T) (nC
 	}
 	return
 }
-func TryCopyScalar[T any](dest SliceLike[T], destStart int, copyLen int, val T) (nCopied int, ok bool) {
+func TryCopyScalarAt[T any](dest SliceLike[T], destStart int, copyLen int, val T) (nCopied int, ok bool) {
 	nCopied = max(0, min(dest.Len()-destStart, copyLen))
 	dIdx := destStart
 	n := 0
@@ -442,7 +478,7 @@ func AppendGetStartIdxV[T any](list ListLike[T], vals ...T) (startIdx int) {
 }
 func Append[T any](list ListLike[T], vals SliceLike[T]) {
 	slots := AppendSlots(list, vals.Len())
-	Copy(slots, 0, vals, 0, vals.Len())
+	CopyAt(slots, 0, vals, 0, vals.Len())
 }
 func AppendSlots[T any](list ListLike[T], count int) SliceLike[T] {
 	start := list.Len()
@@ -454,7 +490,7 @@ func AppendSlots[T any](list ListLike[T], count int) SliceLike[T] {
 func AppendGetStartIdx[T any](list ListLike[T], vals SliceLike[T]) (startIdx int) {
 	startIdx = list.Len()
 	slots := AppendSlots(list, vals.Len())
-	Copy(slots, 0, vals, 0, vals.Len())
+	CopyAt(slots, 0, vals, 0, vals.Len())
 	return
 }
 func InsertV[T any](list ListLike[T], idx int, vals ...T) {
@@ -463,7 +499,7 @@ func InsertV[T any](list ListLike[T], idx int, vals ...T) {
 }
 func Insert[T any](list ListLike[T], idx int, vals SliceLike[T]) {
 	slots := InsertSlots(list, idx, vals.Len())
-	Copy(slots, 0, vals, 0, vals.Len())
+	CopyAt(slots, 0, vals, 0, vals.Len())
 }
 func InsertSlots[T any](list ListLike[T], idx int, count int) SliceLike[T] {
 	removeIdx := list.Len() - 1
@@ -521,7 +557,7 @@ func Remove[T any](list ListLike[T], idx int, count int, outputList ListLike[T])
 	Clear(outputList)
 	GrowCapIfNeeded(outputList, count)
 	GrowLen(outputList, count)
-	Copy(outputList, 0, list, idx, count)
+	CopyAt(outputList, 0, list, idx, count)
 	Delete(list, idx, count)
 }
 func RemoveSparse[T any, I Index](list ListLike[T], removeIndexSlice SliceLike[I], sortRemoveIndexes bool, outputList ListLike[T]) {
@@ -558,7 +594,7 @@ func RemoveSparse[T any, I Index](list ListLike[T], removeIndexSlice SliceLike[I
 }
 func Replace[T any](dest ListLike[T], destStart, destLen int, source SliceLike[T], srcStart, srcLen int) (delta int) {
 	if destLen == srcLen {
-		Copy(dest, destStart, source, srcStart, srcLen)
+		CopyAt(dest, destStart, source, srcStart, srcLen)
 		return 0
 	}
 	if destLen > srcLen {
@@ -569,7 +605,7 @@ func Replace[T any](dest ListLike[T], destStart, destLen int, source SliceLike[T
 			moveDownIdx += 1
 		}
 		dest.ChangeLen(-delta)
-		Copy(dest, destStart, source, srcStart, srcLen)
+		CopyAt(dest, destStart, source, srcStart, srcLen)
 	} else {
 		delta = srcLen - destLen
 		moveUpIdx := dest.Len() - 1
@@ -579,7 +615,7 @@ func Replace[T any](dest ListLike[T], destStart, destLen int, source SliceLike[T
 			Move(dest, moveUpIdx, moveUpIdx+delta)
 			moveUpIdx -= 1
 		}
-		Copy(dest, destStart, source, srcStart, srcLen)
+		CopyAt(dest, destStart, source, srcStart, srcLen)
 	}
 	return delta
 }
@@ -631,7 +667,7 @@ func Dequeue[T any](queue QueueLike[T], count int, outputList ListLike[T]) {
 	slice := Peek(queue, count)
 	Clear(outputList)
 	GrowLen(outputList, count)
-	Copy(outputList, 0, slice, 0, count)
+	CopyAt(outputList, 0, slice, 0, count)
 	Discard(queue, count)
 }
 func TryDequeue[T any](queue QueueLike[T], count int, outputList ListLike[T]) (ok bool) {
@@ -641,7 +677,7 @@ func TryDequeue[T any](queue QueueLike[T], count int, outputList ListLike[T]) (o
 	}
 	Clear(outputList)
 	GrowLen(outputList, count)
-	Copy(outputList, 0, slice, 0, count)
+	CopyAt(outputList, 0, slice, 0, count)
 	Discard(queue, count)
 	return true
 }

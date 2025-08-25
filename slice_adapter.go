@@ -39,7 +39,7 @@ func (slice SliceAdapterIndirect[T]) ReadAt(dest []T, off int64) (n int, err err
 	subSrc := ((*slice.SlicePtr)[maxOff:])
 	srcLike := NewSliceAdapterIndirect(&subSrc)
 	n = min(destLike.Len(), srcLike.Len())
-	Copy(destLike, 0, srcLike, 0, n)
+	CopyAt(destLike, 0, srcLike, 0, n)
 	if n < destLike.Len() {
 		err = io.EOF
 	}
@@ -142,7 +142,7 @@ func (slice *SliceAdapter[T]) ReadAt(dest []T, off int64) (n int, err error) {
 	subSrc := (slice.data[maxOff:])
 	srcLike := NewSliceAdapter(subSrc)
 	n = min(destLike.Len(), srcLike.Len())
-	Copy(&destLike, 0, &srcLike, 0, n)
+	CopyAt(&destLike, 0, &srcLike, 0, n)
 	if n < destLike.Len() {
 		err = io.EOF
 	}
