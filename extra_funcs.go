@@ -310,6 +310,7 @@ func GetUnsafeCast[T any, TT any](slice SliceLike[T], idx int) (val TT) {
 func SetUnsafeCast[T any, TT any](slice SliceLike[T], idx int, val TT) {
 	v := *(*T)(unsafe.Pointer(&val))
 	*(*TT)(unsafe.Pointer(&v)) = val
+	slice.Set(idx, v)
 }
 
 // val_T := *(*T)(unsafe.Pointer(&val))
