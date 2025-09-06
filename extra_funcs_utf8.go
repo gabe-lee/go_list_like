@@ -87,7 +87,7 @@ var acceptRanges = [16]acceptRange{
 }
 
 // Decode a rune from the byte slice at the given index
-func GetRune(slice SliceLike[byte], idx int) (r rune, bytes int, ok bool) {
+func ReadRune[IDX Integer, S SliceLike[byte, IDX]](slice S, idx IDX) (r rune, bytes IDX, ok bool) {
 	n := slice.Len()
 	if n < 1 {
 		return utf8.RuneError, 0, false
@@ -102,7 +102,7 @@ func GetRune(slice SliceLike[byte], idx int) (r rune, bytes int, ok bool) {
 		r = rune(b0)&^mask | utf8.RuneError&mask
 		return r, 1, r == utf8.RuneError
 	}
-	sz := int(x & 7)
+	sz := IDX(x & 7)
 	accept := acceptRanges[x>>4]
 	if n < sz {
 		return utf8.RuneError, 1, false
@@ -129,7 +129,7 @@ func GetRune(slice SliceLike[byte], idx int) (r rune, bytes int, ok bool) {
 }
 
 // Write a rune to the byte slice at given index
-func SetRune(slice SliceLike[byte], idx int, r rune) (bytes int, ok bool) {
+func WriteRune[IDX Integer, S SliceLike[byte, IDX]](slice S, idx IDX, r rune) (bytes IDX, ok bool) {
 	if uint32(r) <= rune1Max {
 		slice.Set(idx, byte(r))
 		return 1, true
@@ -138,15 +138,18 @@ func SetRune(slice SliceLike[byte], idx int, r rune) (bytes int, ok bool) {
 }
 
 // Append a rune to the end of the byte slice
-func AppendRune(list ListLike[byte], r rune) (bytes int, ok bool) {
-	len := utf8.RuneLen(r)
-	GrowCapIfNeeded(list, len)
-	idx := list.Len()
-	GrowLen(list, len)
-	return SetRune(list, idx, r)
+func AppendRune[IDX Integer, L ListLike[byte, IDX]](list L, r rune) (bytes IDX, ok bool) {
+	len := IDX(utf8.RuneLen(r))
+	ok = list.TryEnsureFreeSlots(len)
+	if !ok {
+		return
+	}
+	idx, _ := list.AppendSlotsAssumeCapacity(len)
+	bytes, ok = WriteRune(list, idx, r)
+	return
 }
 
-func setRuneNonASCII(slice SliceLike[byte], idx int, r rune) (bytes int, ok bool) {
+func setRuneNonASCII[IDX Integer, S SliceLike[byte, IDX]](slice S, idx IDX, r rune) (bytes IDX, ok bool) {
 	switch i := uint32(r); {
 	case i <= rune2Max:
 		slice.Set(idx, t2|byte(r>>6))
