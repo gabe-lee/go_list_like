@@ -1,4 +1,5 @@
 # go_list_like
+## WARNING: This README is outdated for v0.20.0
 Interface for user-defined types or wrappers around 3rd-party types that can behave like a traditional 'List' or 'Vector'
   - [Why](#why)
   - [Installation](#installation)

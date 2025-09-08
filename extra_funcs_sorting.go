@@ -9,7 +9,7 @@ func SortedInsert[T any, IDX Integer, L ListLike[T, IDX]](list L, val T, equalOr
 	return
 }
 
-func SortedInsertIndex[T any, IDX Integer, S SliceLike[T, IDX]](slice S, val T, equalOrder func(a, b T) bool, greaterThan func(a, b T) bool) (insertIdx IDX, append bool) {
+func SortedInsertIndex[T any, TT any, IDX Integer, S SliceLike[T, IDX]](slice S, val TT, equalOrder func(a T, b TT) bool, greaterThan func(a T, b TT) bool) (insertIdx IDX, append bool) {
 	if slice.PreferLinearOps() {
 		insertIdx, append = sorted_LinearInsertIndex(slice, val, equalOrder, greaterThan)
 	} else {
@@ -18,7 +18,7 @@ func SortedInsertIndex[T any, IDX Integer, S SliceLike[T, IDX]](slice S, val T, 
 	return
 }
 
-func SortedSearch[T any, IDX Integer, S SliceLike[T, IDX]](slice S, val T, equalOrder func(a, b T) bool, greaterThan func(a, b T) bool) (foundIdx IDX, found bool) {
+func SortedSearch[T any, TT any, IDX Integer, S SliceLike[T, IDX]](slice S, val TT, equalOrder func(a T, b TT) bool, greaterThan func(a T, b TT) bool) (foundIdx IDX, found bool) {
 	if slice.PreferLinearOps() {
 		foundIdx, found = sorted_LinearSearch(slice, val, equalOrder, greaterThan)
 	} else {
@@ -59,7 +59,7 @@ func sorted_LinearInsert[T any, IDX Integer, L ListLike[T, IDX]](list L, val T, 
 // 	return
 // }
 
-func sorted_BinaryInsertIndex[T any, IDX Integer, S SliceLike[T, IDX]](slice S, val T, equalOrder func(a, b T) bool, greaterThan func(a, b T) bool) (insertIdx IDX, append bool) {
+func sorted_BinaryInsertIndex[T any, TT any, IDX Integer, S SliceLike[T, IDX]](slice S, val TT, equalOrder func(a T, b TT) bool, greaterThan func(a T, b TT) bool) (insertIdx IDX, append bool) {
 	var lo IDX = slice.FirstIdx()
 	var hi IDX = slice.LastIdx()
 	var ok bool = slice.IdxValid(lo) && slice.IdxValid(hi)
@@ -75,7 +75,7 @@ func sorted_BinaryInsertIndex[T any, IDX Integer, S SliceLike[T, IDX]](slice S, 
 	return
 }
 
-func sorted_LinearInsertIndex[T any, IDX Integer, S SliceLike[T, IDX]](slice S, val T, equalOrder func(a, b T) bool, greaterThan func(a, b T) bool) (insertIdx IDX, append bool) {
+func sorted_LinearInsertIndex[T any, TT any, IDX Integer, S SliceLike[T, IDX]](slice S, val TT, equalOrder func(a T, b TT) bool, greaterThan func(a T, b TT) bool) (insertIdx IDX, append bool) {
 	var lo IDX = slice.FirstIdx()
 	var hi IDX = slice.LastIdx()
 	var ok bool = slice.IdxValid(lo) && slice.IdxValid(hi)
@@ -90,7 +90,29 @@ func sorted_LinearInsertIndex[T any, IDX Integer, S SliceLike[T, IDX]](slice S, 
 	return
 }
 
-func sorted_BinaryLocate[T any, IDX Integer, S SliceLike[T, IDX]](slice S, lo, hi IDX, locateVal T, equalValue func(a, b T) bool, greaterThan func(a, b T) bool) (idx IDX, found bool, exitHi bool, exitLo bool) {
+func sorted_BinarySearch[T any, TT any, IDX Integer, S SliceLike[T, IDX]](slice S, val TT, equalValue func(a T, b TT) bool, greaterThan func(a T, b TT) bool) (idx IDX, found bool) {
+	var lo IDX = slice.FirstIdx()
+	var hi IDX = slice.LastIdx()
+	var ok bool = slice.IdxValid(lo) && slice.IdxValid(hi)
+	if !ok {
+		return
+	}
+	idx, found, _, _ = sorted_BinaryLocate(slice, lo, hi, val, equalValue, greaterThan)
+	return
+}
+
+func sorted_LinearSearch[T any, TT any, IDX Integer, S SliceLike[T, IDX]](slice S, val TT, equalValue func(a T, b TT) bool, greaterThan func(a T, b TT) bool) (idx IDX, found bool) {
+	var lo IDX = slice.FirstIdx()
+	var hi IDX = slice.LastIdx()
+	var ok bool = slice.IdxValid(lo) && slice.IdxValid(hi)
+	if !ok {
+		return
+	}
+	idx, found, _, _ = sorted_LinearLocate(slice, lo, hi, val, equalValue, greaterThan)
+	return
+}
+
+func sorted_BinaryLocate[T any, TT any, IDX Integer, S SliceLike[T, IDX]](slice S, lo, hi IDX, locateVal TT, equalValue func(a T, b TT) bool, greaterThan func(a T, b TT) bool) (idx IDX, found bool, exitHi bool, exitLo bool) {
 	originalHi := hi
 	originalLo := lo
 	var val T
@@ -120,7 +142,7 @@ func sorted_BinaryLocate[T any, IDX Integer, S SliceLike[T, IDX]](slice S, lo, h
 	}
 }
 
-func sorted_LinearLocate[T any, IDX Integer, S SliceLike[T, IDX]](slice S, lo, hi IDX, locateVal T, equalValue func(a, b T) bool, greaterThan func(a, b T) bool) (idx IDX, found bool, exitHi bool, exitLo bool) {
+func sorted_LinearLocate[T any, TT any, IDX Integer, S SliceLike[T, IDX]](slice S, lo, hi IDX, locateVal TT, equalValue func(a T, b TT) bool, greaterThan func(a T, b TT) bool) (idx IDX, found bool, exitHi bool, exitLo bool) {
 	var val T
 	idx = lo
 	for {
@@ -139,28 +161,6 @@ func sorted_LinearLocate[T any, IDX Integer, S SliceLike[T, IDX]](slice S, lo, h
 			idx = slice.NextIdx(idx)
 		}
 	}
-}
-
-func sorted_BinarySearch[T any, IDX Integer, S SliceLike[T, IDX]](slice S, val T, equalValue func(a, b T) bool, greaterThan func(a, b T) bool) (idx IDX, found bool) {
-	var lo IDX = slice.FirstIdx()
-	var hi IDX = slice.LastIdx()
-	var ok bool = slice.IdxValid(lo) && slice.IdxValid(hi)
-	if !ok {
-		return
-	}
-	idx, found, _, _ = sorted_BinaryLocate(slice, lo, hi, val, equalValue, greaterThan)
-	return
-}
-
-func sorted_LinearSearch[T any, IDX Integer, S SliceLike[T, IDX]](slice S, val T, equalValue func(a, b T) bool, greaterThan func(a, b T) bool) (idx IDX, found bool) {
-	var lo IDX = slice.FirstIdx()
-	var hi IDX = slice.LastIdx()
-	var ok bool = slice.IdxValid(lo) && slice.IdxValid(hi)
-	if !ok {
-		return
-	}
-	idx, found, _, _ = sorted_LinearLocate(slice, lo, hi, val, equalValue, greaterThan)
-	return
 }
 
 // func sorted_BinaryFindMappedIdx[T any, IDX Integer, S SliceLike[T, IDX], L ListLike[IDX, IDX]](slice S, valIdx IDX, indexMap IndexMap[T, IDX, S, L]) (mapIdx IDX, found bool) {
